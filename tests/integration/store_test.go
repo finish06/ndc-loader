@@ -7,8 +7,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/calebdunn/ndc-loader/internal/store"
 	"github.com/calebdunn/ndc-loader/internal/model"
+	"github.com/calebdunn/ndc-loader/internal/store"
 )
 
 func getTestDB(t *testing.T) *store.TestDB {

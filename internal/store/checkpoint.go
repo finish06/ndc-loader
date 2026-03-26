@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/calebdunn/ndc-loader/internal/model"
 	"github.com/jackc/pgx/v5/pgxpool"
+
+	"github.com/calebdunn/ndc-loader/internal/model"
 )
 
 // CheckpointStore manages load checkpoint records.
@@ -71,7 +72,7 @@ func (s *CheckpointStore) SetPreviousRowCount(ctx context.Context, loadID, table
 }
 
 // SetError records an error on a checkpoint.
-func (s *CheckpointStore) SetError(ctx context.Context, loadID, tableName string, errMsg string) error {
+func (s *CheckpointStore) SetError(ctx context.Context, loadID, tableName, errMsg string) error {
 	_, err := s.db.Exec(ctx,
 		`UPDATE load_checkpoints SET status = $1, error_message = $2, completed_at = $3
 		 WHERE load_id = $4 AND table_name = $5`,
@@ -128,9 +129,8 @@ func (s *CheckpointStore) GetLoadedTables(ctx context.Context, loadID string) (m
 }
 
 // HasActiveLoad checks if there's a load currently in progress.
-func (s *CheckpointStore) HasActiveLoad(ctx context.Context) (string, bool, error) {
-	var loadID string
-	err := s.db.QueryRow(ctx,
+func (s *CheckpointStore) HasActiveLoad(ctx context.Context) (loadID string, active bool, err error) {
+	err = s.db.QueryRow(ctx,
 		`SELECT load_id FROM load_checkpoints
 		 WHERE status IN ($1, $2, $3)
 		 ORDER BY created_at DESC LIMIT 1`,

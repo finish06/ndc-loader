@@ -87,7 +87,9 @@ func (l *DataLoader) BulkLoad(ctx context.Context, tableName string, columns []s
 	if err != nil {
 		return nil, fmt.Errorf("beginning transaction: %w", err)
 	}
-	defer tx.Rollback(ctx)
+	defer func() {
+		_ = tx.Rollback(ctx)
+	}()
 
 	// Create staging table with same structure as live table.
 	if _, err := tx.Exec(ctx, fmt.Sprintf("DROP TABLE IF EXISTS %s", pgx.Identifier{stagingTable}.Sanitize())); err != nil {

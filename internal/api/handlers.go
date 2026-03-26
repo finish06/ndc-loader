@@ -7,20 +7,31 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/calebdunn/ndc-loader/internal/loader"
-	"github.com/calebdunn/ndc-loader/internal/store"
 	"github.com/go-chi/chi/v5"
+
+	"github.com/calebdunn/ndc-loader/internal/loader"
+	"github.com/calebdunn/ndc-loader/internal/model"
 )
+
+// CheckpointQuerier abstracts checkpoint query operations used by admin handlers.
+type CheckpointQuerier interface {
+	GetCheckpoints(ctx context.Context, loadID string) ([]model.LoadCheckpoint, error)
+}
+
+// LastLoadInfoProvider abstracts the health check data freshness query.
+type LastLoadInfoProvider interface {
+	GetLastLoadInfo(ctx context.Context) (*time.Time, float64, error)
+}
 
 // AdminHandler handles admin API endpoints.
 type AdminHandler struct {
 	logger          *slog.Logger
 	orchestrator    *loader.Orchestrator
-	checkpointStore *store.CheckpointStore
+	checkpointStore CheckpointQuerier
 }
 
 // NewAdminHandler creates a new AdminHandler.
-func NewAdminHandler(logger *slog.Logger, orchestrator *loader.Orchestrator, checkpointStore *store.CheckpointStore) *AdminHandler {
+func NewAdminHandler(logger *slog.Logger, orchestrator *loader.Orchestrator, checkpointStore CheckpointQuerier) *AdminHandler {
 	return &AdminHandler{
 		logger:          logger,
 		orchestrator:    orchestrator,
@@ -53,7 +64,7 @@ func (h *AdminHandler) TriggerLoad(w http.ResponseWriter, r *http.Request) {
 	if activeID := h.orchestrator.GetActiveLoadID(); activeID != "" {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusConflict)
-		json.NewEncoder(w).Encode(map[string]string{
+		_ = json.NewEncoder(w).Encode(map[string]string{
 			"error":   "load_in_progress",
 			"load_id": activeID,
 		})
@@ -85,7 +96,7 @@ func (h *AdminHandler) TriggerLoad(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusAccepted)
-	json.NewEncoder(w).Encode(resp)
+	_ = json.NewEncoder(w).Encode(resp)
 }
 
 // LoadStatusResponse is the response for GET /api/admin/load/{loadID}.
@@ -98,12 +109,12 @@ type LoadStatusResponse struct {
 
 // CheckpointStatus is a checkpoint in the load status response.
 type CheckpointStatus struct {
-	Dataset         string  `json:"dataset"`
-	Table           string  `json:"table"`
-	Status          string  `json:"status"`
-	RowCount        *int    `json:"row_count,omitempty"`
+	Dataset         string   `json:"dataset"`
+	Table           string   `json:"table"`
+	Status          string   `json:"status"`
+	RowCount        *int     `json:"row_count,omitempty"`
 	DurationSeconds *float64 `json:"duration_seconds,omitempty"`
-	Error           *string `json:"error,omitempty"`
+	Error           *string  `json:"error,omitempty"`
 }
 
 // GetLoadStatus handles GET /api/admin/load/{loadID}.
@@ -115,14 +126,14 @@ func (h *AdminHandler) GetLoadStatus(w http.ResponseWriter, r *http.Request) {
 		h.logger.Error("failed to get checkpoints", "load_id", loadID, "error", err)
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(map[string]string{"error": "internal_error"})
+		_ = json.NewEncoder(w).Encode(map[string]string{"error": "internal_error"})
 		return
 	}
 
 	if len(checkpoints) == 0 {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusNotFound)
-		json.NewEncoder(w).Encode(map[string]string{"error": "load_not_found"})
+		_ = json.NewEncoder(w).Encode(map[string]string{"error": "load_not_found"})
 		return
 	}
 
@@ -171,11 +182,11 @@ func (h *AdminHandler) GetLoadStatus(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(resp)
+	_ = json.NewEncoder(w).Encode(resp)
 }
 
 // healthHandler returns the health check handler with data freshness info.
-func healthHandler(checkpointStore *store.CheckpointStore) http.HandlerFunc {
+func healthHandler(checkpointStore LastLoadInfoProvider) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		resp := map[string]interface{}{
 			"status": "ok",
@@ -196,6 +207,6 @@ func healthHandler(checkpointStore *store.CheckpointStore) http.HandlerFunc {
 		}
 
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp)
 	}
 }

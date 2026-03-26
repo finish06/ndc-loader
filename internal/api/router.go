@@ -4,19 +4,26 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/calebdunn/ndc-loader/internal/loader"
-	"github.com/calebdunn/ndc-loader/internal/store"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+
+	"github.com/calebdunn/ndc-loader/internal/loader"
 )
+
+// CheckpointStoreProvider combines CheckpointQuerier and LastLoadInfoProvider
+// for use by both admin handlers and the health endpoint.
+type CheckpointStoreProvider interface {
+	CheckpointQuerier
+	LastLoadInfoProvider
+}
 
 // NewRouter creates the Chi router with all endpoints and middleware.
 func NewRouter(
 	logger *slog.Logger,
 	apiKeys []string,
 	orchestrator *loader.Orchestrator,
-	checkpointStore *store.CheckpointStore,
+	checkpointStore CheckpointStoreProvider,
 ) http.Handler {
 	r := chi.NewRouter()
 

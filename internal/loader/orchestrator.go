@@ -7,9 +7,10 @@ import (
 	"path/filepath"
 	"sync"
 
+	"github.com/google/uuid"
+
 	"github.com/calebdunn/ndc-loader/internal/model"
 	"github.com/calebdunn/ndc-loader/internal/store"
-	"github.com/google/uuid"
 )
 
 // Orchestrator coordinates the full data load lifecycle:
@@ -17,8 +18,8 @@ import (
 type Orchestrator struct {
 	logger          *slog.Logger
 	downloader      *Downloader
-	dataLoader      *store.DataLoader
-	checkpointStore *store.CheckpointStore
+	dataLoader      BulkLoader
+	checkpointStore CheckpointManager
 	datasetsCfg     *model.DatasetsConfig
 	mu              sync.Mutex
 	activeLoadID    string
@@ -28,8 +29,8 @@ type Orchestrator struct {
 func NewOrchestrator(
 	logger *slog.Logger,
 	downloader *Downloader,
-	dataLoader *store.DataLoader,
-	checkpointStore *store.CheckpointStore,
+	dataLoader BulkLoader,
+	checkpointStore CheckpointManager,
 	datasetsCfg *model.DatasetsConfig,
 ) *Orchestrator {
 	return &Orchestrator{
@@ -76,9 +77,9 @@ var headerMappings = map[string]map[string]string{
 		"sample_package":   "SAMPLE_PACKAGE",
 	},
 	"applications": {
-		"appl_no":               "ApplNo",
-		"appl_type":             "ApplType",
-		"sponsor_name":          "SponsorApplicant",
+		"appl_no":                "ApplNo",
+		"appl_type":              "ApplType",
+		"sponsor_name":           "SponsorApplicant",
 		"most_recent_submission": "MostRecentLabelAvailableDate",
 	},
 	"drugsfda_products": {
@@ -92,12 +93,12 @@ var headerMappings = map[string]map[string]string{
 		"reference_standard": "ReferenceStandard",
 	},
 	"submissions": {
-		"appl_no":                          "ApplNo",
-		"submission_type":                  "SubmissionType",
-		"submission_no":                    "SubmissionNo",
-		"submission_status":                "SubmissionStatus",
-		"submission_status_date":           "SubmissionStatusDate",
-		"submission_class_code":            "SubmissionClassCode",
+		"appl_no":                           "ApplNo",
+		"submission_type":                   "SubmissionType",
+		"submission_no":                     "SubmissionNo",
+		"submission_status":                 "SubmissionStatus",
+		"submission_status_date":            "SubmissionStatusDate",
+		"submission_class_code":             "SubmissionClassCode",
 		"submission_class_code_description": "SubmissionClassCodeDescription",
 	},
 	"marketing_status": {
@@ -212,7 +213,9 @@ func (o *Orchestrator) loadDataset(ctx context.Context, loadID string, ds model.
 		if err := o.loadFile(ctx, loadID, extractDir, fc, ds.Name, force); err != nil {
 			o.logger.Error("failed to load file",
 				"dataset", ds.Name, "file", fc.Filename, "table", tableName, "error", err)
-			o.checkpointStore.SetError(ctx, loadID, tableName, err.Error())
+			if cpErr := o.checkpointStore.SetError(ctx, loadID, tableName, err.Error()); cpErr != nil {
+				o.logger.Error("failed to set checkpoint error", "table", tableName, "error", cpErr)
+			}
 			// Continue to next file.
 			continue
 		}
@@ -226,7 +229,9 @@ func (o *Orchestrator) loadFile(ctx context.Context, loadID, extractDir string, 
 	filePath := filepath.Join(extractDir, fc.Filename)
 
 	// Update checkpoint: loading.
-	o.checkpointStore.UpdateStatus(ctx, loadID, tableName, model.LoadStatusLoading)
+	if err := o.checkpointStore.UpdateStatus(ctx, loadID, tableName, model.LoadStatusLoading); err != nil {
+		o.logger.Warn("failed to update checkpoint status", "table", tableName, "error", err)
+	}
 
 	// Parse the file.
 	delimiter := '\t'
@@ -265,7 +270,9 @@ func (o *Orchestrator) loadFile(ctx context.Context, loadID, extractDir string, 
 			if err := o.dataLoader.CheckRowCountSafety(prevCount, len(rows)); err != nil {
 				return fmt.Errorf("row count safety check failed for %s: %w", tableName, err)
 			}
-			o.checkpointStore.SetPreviousRowCount(ctx, loadID, tableName, prevCount)
+			if err := o.checkpointStore.SetPreviousRowCount(ctx, loadID, tableName, prevCount); err != nil {
+				o.logger.Warn("failed to set previous row count", "table", tableName, "error", err)
+			}
 		}
 	}
 
@@ -276,8 +283,12 @@ func (o *Orchestrator) loadFile(ctx context.Context, loadID, extractDir string, 
 	}
 
 	// Update checkpoint: loaded.
-	o.checkpointStore.UpdateStatus(ctx, loadID, tableName, model.LoadStatusLoaded)
-	o.checkpointStore.SetRowCount(ctx, loadID, tableName, result.RowCount)
+	if err := o.checkpointStore.UpdateStatus(ctx, loadID, tableName, model.LoadStatusLoaded); err != nil {
+		o.logger.Warn("failed to update checkpoint status to loaded", "table", tableName, "error", err)
+	}
+	if err := o.checkpointStore.SetRowCount(ctx, loadID, tableName, result.RowCount); err != nil {
+		o.logger.Warn("failed to set row count", "table", tableName, "error", err)
+	}
 
 	o.logger.Info("table loaded successfully",
 		"dataset", datasetName,

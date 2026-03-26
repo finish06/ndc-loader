@@ -135,6 +135,82 @@ func TestIsSubPath(t *testing.T) {
 	}
 }
 
+func TestDownloader_Extract_WithSubdirectory(t *testing.T) {
+	tmpDir := t.TempDir()
+	zipPath := filepath.Join(tmpDir, "test.zip")
+
+	// Create a ZIP with a subdirectory entry.
+	f, err := os.Create(zipPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	w := zip.NewWriter(f)
+	// Add a directory entry.
+	_, err = w.Create("subdir/")
+	if err != nil {
+		t.Fatal(err)
+	}
+	fw, err := w.Create("subdir/file.txt")
+	if err != nil {
+		t.Fatal(err)
+	}
+	fw.Write([]byte("content"))
+	w.Close()
+	f.Close()
+
+	d := NewDownloader(tmpDir, 1)
+	extractDir, err := d.Extract(zipPath, "subdir_dataset")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Verify file exists in subdirectory.
+	if _, err := os.Stat(filepath.Join(extractDir, "subdir", "file.txt")); os.IsNotExist(err) {
+		t.Error("expected subdir/file.txt to exist")
+	}
+}
+
+func TestDownloader_Download_InvalidURL(t *testing.T) {
+	tmpDir := t.TempDir()
+	d := NewDownloader(tmpDir, 0)
+
+	_, err := d.Download("http://localhost:1/nonexistent", "test.zip")
+	if err == nil {
+		t.Fatal("expected error for connection failure")
+	}
+}
+
+func TestIsSubPath_AbsoluteRelative(t *testing.T) {
+	// Test with paths where Rel would return an absolute path on some systems.
+	// On Unix, different volume roots don't exist, but we can test the .. case.
+	result := isSubPath("/a/b", "/a/b/../../etc/passwd")
+	if result {
+		t.Error("expected false for path traversal attempt")
+	}
+}
+
+func TestDownloader_Cleanup(t *testing.T) {
+	tmpDir := t.TempDir()
+	d := NewDownloader(tmpDir, 1)
+
+	// Create some files to clean up.
+	datasetDir := filepath.Join(tmpDir, "test_dataset")
+	os.MkdirAll(datasetDir, 0o755)
+	os.WriteFile(filepath.Join(datasetDir, "file.txt"), []byte("data"), 0o644)
+	os.WriteFile(filepath.Join(tmpDir, "test_dataset.zip"), []byte("zipdata"), 0o644)
+
+	d.Cleanup("test_dataset")
+
+	// Directory should be gone.
+	if _, err := os.Stat(datasetDir); !os.IsNotExist(err) {
+		t.Error("expected dataset directory to be removed")
+	}
+	// ZIP should be gone.
+	if _, err := os.Stat(filepath.Join(tmpDir, "test_dataset.zip")); !os.IsNotExist(err) {
+		t.Error("expected ZIP file to be removed")
+	}
+}
+
 func createTestZip(t *testing.T, path string, files map[string]string) {
 	t.Helper()
 	f, err := os.Create(path)

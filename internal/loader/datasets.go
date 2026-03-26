@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/calebdunn/ndc-loader/internal/model"
 	"gopkg.in/yaml.v3"
+
+	"github.com/calebdunn/ndc-loader/internal/model"
 )
 
 // LoadDatasetsConfig reads and parses the datasets.yaml configuration file.

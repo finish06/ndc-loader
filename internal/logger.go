@@ -23,7 +23,7 @@ func SetupLogger(level, format string) *slog.Logger {
 	opts := &slog.HandlerOptions{Level: lvl}
 
 	var handler slog.Handler
-	if strings.ToLower(format) == "text" {
+	if strings.EqualFold(format, "text") {
 		handler = slog.NewTextHandler(os.Stdout, opts)
 	} else {
 		handler = slog.NewJSONHandler(os.Stdout, opts)

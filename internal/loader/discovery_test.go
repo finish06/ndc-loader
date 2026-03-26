@@ -1,6 +1,8 @@
 package loader
 
 import (
+	"net/http"
+	"net/http/httptest"
 	"testing"
 )
 
@@ -59,6 +61,44 @@ func TestParseDownloadsPage_NoDuplicates(t *testing.T) {
 	}
 	if ndcCount != 1 {
 		t.Errorf("expected 1 ndc_directory entry, got %d", ndcCount)
+	}
+}
+
+func TestDiscoverDatasets_Success(t *testing.T) {
+	html := `<html><body>
+		<a href="https://www.accessdata.fda.gov/cder/ndctext.zip">NDC</a>
+		<a href="https://www.fda.gov/media/89850/download">DrugsFDA</a>
+	</body></html>`
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(html))
+	}))
+	defer server.Close()
+
+	datasets, err := DiscoverDatasets(server.URL)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(datasets) < 2 {
+		t.Errorf("expected at least 2 datasets, got %d", len(datasets))
+	}
+}
+
+func TestDiscoverDatasets_ServerError(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+	}))
+	defer server.Close()
+
+	_, err := DiscoverDatasets(server.URL)
+	if err == nil {
+		t.Fatal("expected error for 500 response")
+	}
+}
+
+func TestDiscoverDatasets_ConnectionError(t *testing.T) {
+	_, err := DiscoverDatasets("http://localhost:1/nonexistent")
+	if err == nil {
+		t.Fatal("expected error for connection failure")
 	}
 }
 

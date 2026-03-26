@@ -25,13 +25,13 @@ type DrugsFDAProduct struct {
 
 // Submission represents a Drugs@FDA submission record.
 type Submission struct {
-	ID                           int
-	ApplNo                       string
-	SubmissionType               *string
-	SubmissionNo                 *string
-	SubmissionStatus             *string
-	SubmissionStatusDate         *time.Time
-	SubmissionClassCode          *string
+	ID                             int
+	ApplNo                         string
+	SubmissionType                 *string
+	SubmissionNo                   *string
+	SubmissionStatus               *string
+	SubmissionStatusDate           *time.Time
+	SubmissionClassCode            *string
 	SubmissionClassCodeDescription *string
 }
 

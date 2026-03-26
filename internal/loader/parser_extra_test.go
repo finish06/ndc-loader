@@ -11,7 +11,9 @@ func TestParseTabDelimited_MalformedRow(t *testing.T) {
 	path := filepath.Join(tmp, "malformed.txt")
 	// Create a file with a valid header, a good row, and a row with mismatched quotes.
 	content := "col1\tcol2\nval1\tval2\n\"unclosed\n"
-	os.WriteFile(path, []byte(content), 0o644)
+	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
+		t.Fatalf("failed to write test file: %v", err)
+	}
 
 	result, err := ParseTabDelimited(path, '\t', true)
 	if err != nil {

@@ -7,13 +7,13 @@ import (
 
 // Metrics holds all Prometheus metrics for ndc-loader.
 var Metrics = struct {
-	ProductsTotal       prometheus.Gauge
-	PackagesTotal       prometheus.Gauge
-	LoadDuration        prometheus.Gauge
-	LoadLastSuccess     prometheus.Gauge
-	LoadErrorsTotal     prometheus.Counter
-	QueryDuration       *prometheus.HistogramVec
-	SearchDuration      *prometheus.HistogramVec
+	ProductsTotal   prometheus.Gauge
+	PackagesTotal   prometheus.Gauge
+	LoadDuration    prometheus.Gauge
+	LoadLastSuccess prometheus.Gauge
+	LoadErrorsTotal prometheus.Counter
+	QueryDuration   *prometheus.HistogramVec
+	SearchDuration  *prometheus.HistogramVec
 }{
 	ProductsTotal: promauto.NewGauge(prometheus.GaugeOpts{
 		Name: "ndc_loader_products_total",

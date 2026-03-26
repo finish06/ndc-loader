@@ -4,17 +4,17 @@ import "time"
 
 // Config holds application configuration loaded from environment variables.
 type Config struct {
-	DatabaseURL          string
-	ListenAddr           string
-	LoadSchedule         string
-	FDADownloadsURL      string
-	DownloadDir          string
-	MaxRetryAttempts     int
+	DatabaseURL           string
+	ListenAddr            string
+	LoadSchedule          string
+	FDADownloadsURL       string
+	DownloadDir           string
+	MaxRetryAttempts      int
 	RowCountDropThreshold float64
-	APIKeys              []string
-	LogLevel             string
-	LogFormat            string
-	DatasetsFile         string
+	APIKeys               []string
+	LogLevel              string
+	LogFormat             string
+	DatasetsFile          string
 }
 
 // DatasetConfig represents a configured FDA dataset to download and ingest.

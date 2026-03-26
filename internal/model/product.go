@@ -27,13 +27,13 @@ type Product struct {
 
 // Package represents an NDC Directory package record.
 type Package struct {
-	ID              int
-	ProductID       string
-	ProductNDC      string
-	NDCPackageCode  string
-	Description     *string
-	MarketingStart  *time.Time
-	MarketingEnd    *time.Time
-	NDCExclude      bool
-	SamplePackage   bool
+	ID             int
+	ProductID      string
+	ProductNDC     string
+	NDCPackageCode string
+	Description    *string
+	MarketingStart *time.Time
+	MarketingEnd   *time.Time
+	NDCExclude     bool
+	SamplePackage  bool
 }

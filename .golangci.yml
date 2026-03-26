@@ -1,0 +1,88 @@
+version: "2"
+run:
+  modules-download-mode: readonly
+linters:
+  enable:
+    - gocritic
+    - misspell
+    - revive
+  settings:
+    gocritic:
+      disabled-checks:
+        - hugeParam
+        - rangeValCopy
+      enabled-tags:
+        - diagnostic
+        - style
+        - performance
+    misspell:
+      locale: US
+    revive:
+      rules:
+        - name: blank-imports
+        - name: context-as-argument
+        - name: context-keys-type
+        - name: dot-imports
+        - name: error-return
+        - name: error-strings
+        - name: exported
+          arguments:
+            - disableStutteringCheck
+        - name: increment-decrement
+        - name: indent-error-flow
+        - name: range
+        - name: receiver-naming
+        - name: time-naming
+        - name: unexported-return
+        - name: var-declaration
+        - name: var-naming
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      - linters:
+          - errcheck
+          - gocritic
+          - revive
+        path: _test\.go
+      - linters:
+          - errcheck
+          - revive
+        path: testhelper\.go
+      - path: _test\.go
+        text: unused-parameter
+      - path: _test\.go
+        text: "SA9003"
+      - path: _test
+        text: "var-naming.*underscores"
+      - path: main\.go
+        text: "exitAfterDefer"
+    paths:
+      - vendor
+      - testdata
+      - third_party$
+      - builtin$
+      - examples$
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  settings:
+    goimports:
+      local-prefixes:
+        - github.com/calebdunn/ndc-loader
+  exclusions:
+    generated: lax
+    paths:
+      - vendor
+      - testdata
+      - third_party$
+      - builtin$
+      - examples$

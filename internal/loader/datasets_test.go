@@ -91,6 +91,42 @@ func TestLoadDatasetsConfig_MissingSourceURL(t *testing.T) {
 	}
 }
 
+func TestLoadDatasetsConfig_MissingFilename(t *testing.T) {
+	tmp := t.TempDir()
+	path := filepath.Join(tmp, "nofilename.yaml")
+	content := `datasets:
+  - name: test
+    enabled: true
+    source_url: http://example.com/data.zip
+    files:
+      - table: data
+`
+	os.WriteFile(path, []byte(content), 0o644)
+
+	_, err := LoadDatasetsConfig(path)
+	if err == nil {
+		t.Fatal("expected error for missing filename")
+	}
+}
+
+func TestLoadDatasetsConfig_MissingTable(t *testing.T) {
+	tmp := t.TempDir()
+	path := filepath.Join(tmp, "notable.yaml")
+	content := `datasets:
+  - name: test
+    enabled: true
+    source_url: http://example.com/data.zip
+    files:
+      - filename: data.txt
+`
+	os.WriteFile(path, []byte(content), 0o644)
+
+	_, err := LoadDatasetsConfig(path)
+	if err == nil {
+		t.Fatal("expected error for missing table")
+	}
+}
+
 func TestEnabledDatasets(t *testing.T) {
 	path := filepath.Join("..", "..", "datasets.yaml")
 	cfg, err := LoadDatasetsConfig(path)

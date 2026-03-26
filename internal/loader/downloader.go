@@ -3,13 +3,13 @@ package loader
 import (
 	"archive/zip"
 	"fmt"
-	"strings"
 	"io"
 	"log/slog"
 	"math"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -108,7 +108,9 @@ func (d *Downloader) Extract(zipPath, datasetName string) (string, error) {
 		}
 
 		if f.FileInfo().IsDir() {
-			os.MkdirAll(destPath, 0o755)
+			if err := os.MkdirAll(destPath, 0o755); err != nil {
+				return "", fmt.Errorf("creating directory %s: %w", destPath, err)
+			}
 			continue
 		}
 

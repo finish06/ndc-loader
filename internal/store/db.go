@@ -7,8 +7,9 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/calebdunn/ndc-loader/migrations"
 	"github.com/jackc/pgx/v5/pgxpool"
+
+	"github.com/calebdunn/ndc-loader/migrations"
 )
 
 // NewDB creates a new connection pool to PostgreSQL.

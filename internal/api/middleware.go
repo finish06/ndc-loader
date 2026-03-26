@@ -18,7 +18,7 @@ func APIKeyAuth(validKeys []string) func(http.Handler) http.Handler {
 			if key == "" || !keySet[key] {
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusUnauthorized)
-				json.NewEncoder(w).Encode(map[string]string{
+				_ = json.NewEncoder(w).Encode(map[string]string{
 					"error":   "unauthorized",
 					"message": "valid API key required",
 				})
