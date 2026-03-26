@@ -17,6 +17,11 @@
 <!-- Things learned about the tech stack, libraries, APIs, infrastructure -->
 <!-- Format: - {date}: {discovery}. Source: {how we learned this}. -->
 
+- 2026-03-25: Go's csv.Reader with `TrimLeadingSpace=true` collapses empty fields between consecutive tab delimiters. Remove TrimLeadingSpace when parsing tab-delimited FDA data. Source: integration test failure — empty DATE fields (ENDMARKETINGDATE, DEASCHEDULE) were being consumed.
+- 2026-03-25: pgx CopyFrom sends values in binary format. String values cannot be inserted into DATE or BOOLEAN columns — must convert to `time.Time` and `bool` before COPY. Source: integration test failure — "unable to encode into binary format for date".
+- 2026-03-25: FDA NDC Directory uses YYYYMMDD date format (e.g., "19950301"). Drugs@FDA uses the same format. Both need parsing to time.Time for PostgreSQL DATE columns.
+- 2026-03-25: FDA NDC Directory uses "Y"/"N" for boolean fields (NDC_EXCLUDE_FLAG, SAMPLE_PACKAGE). Need explicit bool conversion.
+
 ## Architecture Decisions
 <!-- Decisions made and their rationale -->
 <!-- Format: - {date}: Chose {X} over {Y} because {reason}. -->
