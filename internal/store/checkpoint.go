@@ -145,6 +145,26 @@ func (s *CheckpointStore) HasActiveLoad(ctx context.Context) (string, bool, erro
 	return loadID, true, nil
 }
 
+// GetLastLoadInfo returns the timestamp of the last successful load and data age in hours.
+func (s *CheckpointStore) GetLastLoadInfo(ctx context.Context) (*time.Time, float64, error) {
+	var completedAt time.Time
+	err := s.db.QueryRow(ctx,
+		`SELECT completed_at FROM load_checkpoints
+		 WHERE status = $1 AND completed_at IS NOT NULL
+		 ORDER BY completed_at DESC LIMIT 1`,
+		model.LoadStatusLoaded,
+	).Scan(&completedAt)
+	if err != nil {
+		if err.Error() == "no rows in result set" {
+			return nil, 0, nil
+		}
+		return nil, 0, err
+	}
+
+	ageHours := time.Since(completedAt).Hours()
+	return &completedAt, ageHours, nil
+}
+
 // GetPreviousRowCount gets the row count from the last successful load for a table.
 func (s *CheckpointStore) GetPreviousRowCount(ctx context.Context, tableName string) (int, error) {
 	var count int

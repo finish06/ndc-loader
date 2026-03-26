@@ -174,12 +174,25 @@ func (h *AdminHandler) GetLoadStatus(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(resp)
 }
 
-// healthHandler returns the health check handler.
+// healthHandler returns the health check handler with data freshness info.
 func healthHandler(checkpointStore *store.CheckpointStore) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		resp := map[string]interface{}{
 			"status": "ok",
 			"db":     "connected",
+		}
+
+		// Add data freshness if checkpoint store is available.
+		if checkpointStore != nil {
+			lastLoad, dataAgeHours, err := checkpointStore.GetLastLoadInfo(r.Context())
+			if err == nil && lastLoad != nil {
+				resp["last_load"] = lastLoad.Format(time.RFC3339)
+				resp["data_age_hours"] = dataAgeHours
+
+				if dataAgeHours > 48 {
+					resp["status"] = "degraded"
+				}
+			}
 		}
 
 		w.Header().Set("Content-Type", "application/json")

@@ -8,6 +8,7 @@ import (
 	"github.com/calebdunn/ndc-loader/internal/store"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 // NewRouter creates the Chi router with all endpoints and middleware.
@@ -27,6 +28,9 @@ func NewRouter(
 
 	// Health endpoint (no auth required).
 	r.Get("/health", healthHandler(checkpointStore))
+
+	// Prometheus metrics endpoint (no auth required).
+	r.Handle("/metrics", promhttp.Handler())
 
 	// All other routes require API key.
 	r.Group(func(r chi.Router) {
