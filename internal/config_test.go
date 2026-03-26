@@ -6,8 +6,9 @@ import (
 )
 
 func TestLoadConfig_Defaults(t *testing.T) {
-	// Set required API_KEYS.
+	// Set required API_KEYS and clear DATABASE_URL so default is used.
 	t.Setenv("API_KEYS", "test-key-1,test-key-2")
+	t.Setenv("DATABASE_URL", "")
 
 	cfg, err := LoadConfig()
 	if err != nil {
