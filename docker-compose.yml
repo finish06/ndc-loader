@@ -2,15 +2,15 @@ services:
   postgres:
     image: postgres:16-alpine
     environment:
-      POSTGRES_USER: ndc
-      POSTGRES_PASSWORD: ndc
-      POSTGRES_DB: ndc
+      POSTGRES_USER: ${POSTGRES_USER:-ndc}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ndc}
+      POSTGRES_DB: ${POSTGRES_DB:-ndc}
     ports:
-      - "5433:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ndc -d ndc"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-ndc} -d ${POSTGRES_DB:-ndc}"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -21,16 +21,16 @@ services:
       postgres:
         condition: service_healthy
     environment:
-      DATABASE_URL: postgres://ndc:ndc@postgres:5432/ndc?sslmode=disable
-      LISTEN_ADDR: ":8081"
-      LOAD_SCHEDULE: "0 3 * * *"
+      DATABASE_URL: "postgres://${POSTGRES_USER:-ndc}:${POSTGRES_PASSWORD:-ndc}@postgres:5432/${POSTGRES_DB:-ndc}?sslmode=disable"
+      LISTEN_ADDR: ":${APP_PORT:-8081}"
+      LOAD_SCHEDULE: "${LOAD_SCHEDULE:-0 3 * * *}"
       API_KEYS: "${API_KEYS:-dev-key-change-me}"
-      LOG_LEVEL: info
-      LOG_FORMAT: json
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      LOG_FORMAT: ${LOG_FORMAT:-json}
       DOWNLOAD_DIR: /tmp/fda-data
       DATASETS_FILE: /app/datasets.yaml
     ports:
-      - "8081:8081"
+      - "${APP_PORT:-8081}:${APP_PORT:-8081}"
     volumes:
       - ./datasets.yaml:/app/datasets.yaml:ro
 

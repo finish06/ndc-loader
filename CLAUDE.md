@@ -17,7 +17,7 @@ Document hierarchy: PRD -> Spec -> Plan -> User Test Cases -> Automated Tests ->
 
 | Layer | Technology | Version |
 |-------|-----------|---------|
-| Language | Go | 1.22+ |
+| Language | Go | 1.26+ |
 | HTTP Framework | Chi | v5 |
 | Database | PostgreSQL | 16+ |
 | DB Driver | pgx | v5 |

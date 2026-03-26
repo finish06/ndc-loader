@@ -17,14 +17,14 @@
     "languages": [
       {
         "name": "Go",
-        "version": "1.22+",
+        "version": "1.26+",
         "role": "backend"
       }
     ],
     "backend": {
       "framework": "Chi",
       "version": "v5",
-      "runtime": "Go 1.22+"
+      "runtime": "Go 1.26+"
     },
     "frontend": {
       "framework": null,
