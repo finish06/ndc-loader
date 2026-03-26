@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"os"
 	"strings"
+	"time"
 )
 
 // ParseResult holds the parsed rows and header mapping from a data file.
@@ -75,9 +76,25 @@ func ParseTabDelimited(filePath string, delimiter rune, hasHeader bool) (*ParseR
 	return result, nil
 }
 
+// dateColumns lists target column names that should be parsed as dates.
+var dateColumns = map[string]bool{
+	"marketing_start":        true,
+	"marketing_end":          true,
+	"listing_certified":      true,
+	"most_recent_submission": true,
+	"submission_status_date": true,
+}
+
+// boolColumns lists target column names that should be parsed as booleans.
+var boolColumns = map[string]bool{
+	"ndc_exclude":    true,
+	"sample_package": true,
+}
+
 // MapColumns maps parsed rows to the target table columns using header names.
 // Source headers are matched case-insensitively to target column names.
 // Unknown source columns are ignored. Missing target columns get nil values.
+// Date and boolean columns are automatically coerced from string representations.
 func MapColumns(parsed *ParseResult, targetColumns []string, headerMapping map[string]string) ([][]interface{}, error) {
 	if len(parsed.Headers) == 0 {
 		return nil, fmt.Errorf("no headers available for column mapping")
@@ -91,13 +108,13 @@ func MapColumns(parsed *ParseResult, targetColumns []string, headerMapping map[s
 
 	// Build mapping: target column index -> source column index.
 	type colMap struct {
-		targetIdx int
-		sourceIdx int
+		targetIdx  int
+		sourceIdx  int
+		targetName string
 	}
 	var mappings []colMap
 
 	for targetIdx, targetCol := range targetColumns {
-		// Check if there's a custom header mapping.
 		sourceHeader := targetCol
 		if mapped, ok := headerMapping[targetCol]; ok {
 			sourceHeader = mapped
@@ -105,10 +122,9 @@ func MapColumns(parsed *ParseResult, targetColumns []string, headerMapping map[s
 
 		srcIdx, found := sourceIdx[strings.ToLower(sourceHeader)]
 		if !found {
-			// Target column not in source — will be nil.
 			continue
 		}
-		mappings = append(mappings, colMap{targetIdx: targetIdx, sourceIdx: srcIdx})
+		mappings = append(mappings, colMap{targetIdx: targetIdx, sourceIdx: srcIdx, targetName: targetCol})
 	}
 
 	if len(mappings) == 0 {
@@ -125,7 +141,7 @@ func MapColumns(parsed *ParseResult, targetColumns []string, headerMapping map[s
 				if val == "" {
 					mapped[m.targetIdx] = nil
 				} else {
-					mapped[m.targetIdx] = val
+					mapped[m.targetIdx] = coerceValue(val, m.targetName)
 				}
 			}
 		}
@@ -133,4 +149,53 @@ func MapColumns(parsed *ParseResult, targetColumns []string, headerMapping map[s
 	}
 
 	return result, nil
+}
+
+// coerceValue converts a string value to the appropriate Go type
+// based on the target column name.
+func coerceValue(val, columnName string) interface{} {
+	if dateColumns[columnName] {
+		return parseDate(val)
+	}
+	if boolColumns[columnName] {
+		return parseBool(val)
+	}
+	return val
+}
+
+// parseDate attempts to parse FDA date formats (YYYYMMDD or YYYY-MM-DD).
+// Returns nil if parsing fails.
+func parseDate(val string) interface{} {
+	// Try YYYYMMDD format (most common in FDA data).
+	t, err := time.Parse("20060102", val)
+	if err == nil {
+		return t
+	}
+
+	// Try YYYY-MM-DD.
+	t, err = time.Parse("2006-01-02", val)
+	if err == nil {
+		return t
+	}
+
+	// Try MM/DD/YYYY.
+	t, err = time.Parse("01/02/2006", val)
+	if err == nil {
+		return t
+	}
+
+	slog.Debug("unparseable date value, storing as nil", "value", val)
+	return nil
+}
+
+// parseBool converts Y/N, Yes/No, True/False strings to bool.
+func parseBool(val string) interface{} {
+	switch strings.ToUpper(val) {
+	case "Y", "YES", "TRUE", "1":
+		return true
+	case "N", "NO", "FALSE", "0":
+		return false
+	default:
+		return false
+	}
 }

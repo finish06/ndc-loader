@@ -132,6 +132,63 @@ func TestMapColumns_ProductMapping(t *testing.T) {
 	if row[14] != "ANDA076543" {
 		t.Errorf("expected application_number ANDA076543, got %v", row[14])
 	}
+
+	// Check date coercion (marketing_start is a date column).
+	if row[15] == nil {
+		t.Error("expected marketing_start to be non-nil")
+	}
+
+	// Check boolean coercion (ndc_exclude is a bool column).
+	if row[17] != false {
+		t.Errorf("expected ndc_exclude false, got %v", row[17])
+	}
+}
+
+func TestParseDate(t *testing.T) {
+	tests := []struct {
+		input string
+		isNil bool
+	}{
+		{"20260301", false},
+		{"2026-03-01", false},
+		{"03/01/2026", false},
+		{"invalid", true},
+		{"", true}, // empty won't reach parseDate due to nil check in MapColumns
+	}
+
+	for _, tc := range tests {
+		result := parseDate(tc.input)
+		if tc.isNil && result != nil {
+			t.Errorf("parseDate(%q) = %v, expected nil", tc.input, result)
+		}
+		if !tc.isNil && result == nil {
+			t.Errorf("parseDate(%q) = nil, expected non-nil", tc.input)
+		}
+	}
+}
+
+func TestParseBool(t *testing.T) {
+	tests := []struct {
+		input string
+		want  bool
+	}{
+		{"Y", true},
+		{"N", false},
+		{"Yes", true},
+		{"No", false},
+		{"TRUE", true},
+		{"FALSE", false},
+		{"1", true},
+		{"0", false},
+		{"unknown", false},
+	}
+
+	for _, tc := range tests {
+		result := parseBool(tc.input)
+		if result != tc.want {
+			t.Errorf("parseBool(%q) = %v, want %v", tc.input, result, tc.want)
+		}
+	}
 }
 
 func TestMapColumns_NoHeaders(t *testing.T) {
