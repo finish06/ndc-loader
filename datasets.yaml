@@ -1,0 +1,44 @@
+datasets:
+  - name: ndc_directory
+    enabled: true
+    source_url: https://www.accessdata.fda.gov/cder/ndctext.zip
+    format: zip
+    files:
+      - filename: product.txt
+        table: products
+        delimiter: "\t"
+        has_header: true
+      - filename: package.txt
+        table: packages
+        delimiter: "\t"
+        has_header: true
+
+  - name: drugsfda
+    enabled: true
+    source_url: https://www.fda.gov/media/89850/download
+    format: zip
+    files:
+      - filename: Applications.txt
+        table: applications
+        delimiter: "\t"
+        has_header: true
+      - filename: Products.txt
+        table: drugsfda_products
+        delimiter: "\t"
+        has_header: true
+      - filename: Submissions.txt
+        table: submissions
+        delimiter: "\t"
+        has_header: true
+      - filename: MarketingStatus.txt
+        table: marketing_status
+        delimiter: "\t"
+        has_header: true
+      - filename: ActionTypes_Lookup.txt
+        table: active_ingredients
+        delimiter: "\t"
+        has_header: true
+      - filename: TECodes.txt
+        table: te_codes
+        delimiter: "\t"
+        has_header: true

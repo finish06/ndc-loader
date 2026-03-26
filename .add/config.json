@@ -1,0 +1,152 @@
+{
+  "$schema": "https://github.com/MountainUnicorn/add/config.schema.json",
+  "version": "0.5.0",
+  "project": {
+    "name": "ndc-loader",
+    "description": "FDA NDC Directory bulk loader and REST API service — replaces openFDA dependency for drug-cash and internal microservices",
+    "created": "2026-03-25",
+    "author": "calebdunn"
+  },
+  "maturity": {
+    "level": "alpha",
+    "promoted_from": null,
+    "promoted_date": null,
+    "next_promotion_criteria": "Feature specs for all user-facing features, test coverage above 50%, PR workflow with code review, at least 2 deployment environments, TDD evidence"
+  },
+  "architecture": {
+    "languages": [
+      {
+        "name": "Go",
+        "version": "1.22+",
+        "role": "backend"
+      }
+    ],
+    "backend": {
+      "framework": "Chi",
+      "version": "v5",
+      "runtime": "Go 1.22+"
+    },
+    "frontend": {
+      "framework": null,
+      "version": null,
+      "bundler": "none"
+    },
+    "database": {
+      "type": "PostgreSQL",
+      "version": "16+"
+    },
+    "containerized": true,
+    "container_strategy": "docker-compose",
+    "suggested_by_claude": false
+  },
+  "infrastructure": {
+    "git_host": "github",
+    "git_remote": null,
+    "cloud_provider": "self-hosted",
+    "cloud_services": ["Docker", "homelab"],
+    "cicd": {
+      "platform": "github-actions",
+      "scaffolded_by_add": false,
+      "pipeline_file": ".github/workflows/ci.yml"
+    },
+    "infrastructure_as_code": "none"
+  },
+  "environments": {
+    "tier": 3,
+    "local": {
+      "run": "docker-compose up",
+      "test": "go test ./...",
+      "e2e": "go test -tags=e2e ./tests/e2e/...",
+      "url": "http://localhost:8081"
+    },
+    "dev": {
+      "deploy_trigger": "push to dev branch",
+      "url": null,
+      "verify": ["unit_tests", "integration_tests"]
+    },
+    "staging": {
+      "deploy_trigger": "push to staging branch",
+      "url": null,
+      "verify": ["e2e_tests", "performance_tests"]
+    },
+    "production": {
+      "deploy_trigger": "merge to main",
+      "verify": ["smoke_tests"],
+      "url": null,
+      "requires_approval": true
+    }
+  },
+  "quality": {
+    "mode": "strict",
+    "coverage_threshold": 90,
+    "type_check_blocking": true,
+    "e2e_required": true,
+    "screenshot_protocol": true,
+    "lint": {
+      "backend": "golangci-lint run",
+      "frontend": null
+    },
+    "typecheck": {
+      "backend": "go vet ./...",
+      "frontend": null
+    },
+    "test": {
+      "unit": "go test -race -cover ./...",
+      "integration": "go test -tags=integration ./tests/integration/...",
+      "e2e": "go test -tags=e2e ./tests/e2e/..."
+    }
+  },
+  "collaboration": {
+    "autonomy_level": "autonomous",
+    "team_size": "solo",
+    "commit_review_gate": false,
+    "pr_review_gate": true,
+    "deploy_approval_required": true
+  },
+  "source_control": {
+    "branching": "feature-branches",
+    "default_branch": "main",
+    "commit_convention": "conventional",
+    "pr_template": true,
+    "protected_branches": ["main"]
+  },
+  "branding": {
+    "accentColor": "#6366f1",
+    "presetName": "purple",
+    "palette": {
+      "accent": "#6366f1",
+      "accentLight": "#818cf8",
+      "accentDark": "#4f46e5",
+      "accentMuted": "#a5b4fc",
+      "accentGlow": "rgba(99,102,241,0.4)",
+      "gradientStart": "#6366f1",
+      "gradientMid": "#8b5cf6",
+      "gradientEnd": "#d946ef",
+      "success": "#22c55e",
+      "warning": "#eab308",
+      "info": "#0ea5e9"
+    },
+    "fonts": null,
+    "tone": null,
+    "logoPath": null,
+    "styleGuideSource": null
+  },
+  "imageGeneration": {
+    "enabled": false,
+    "tool": null,
+    "plugin": null,
+    "nudged": false,
+    "lastDetected": null
+  },
+  "changelog": {
+    "lastProcessedCommit": null,
+    "lastVersionTag": null
+  },
+  "planning": {
+    "current_milestone": "M1-schema-loader",
+    "current_cycle": null,
+    "wip_limit": 3,
+    "parallel_agents": 2,
+    "cycle_history": []
+  }
+}
