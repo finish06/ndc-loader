@@ -232,6 +232,7 @@ func (q *QueryStore) OpenFDASearch(ctx context.Context, whereClause string, args
 	defer rows.Close()
 
 	var products []ProductResult
+	var productNDCs []string
 	for rows.Next() {
 		var p ProductResult
 		var productID string
@@ -244,16 +245,50 @@ func (q *QueryStore) OpenFDASearch(ctx context.Context, whereClause string, args
 			return nil, 0, fmt.Errorf("scanning openfda result: %w", err)
 		}
 
-		// Load packages for each product.
-		packages, err := q.getPackages(ctx, p.ProductNDC)
-		if err == nil {
-			p.Packages = packages
-		}
-
 		products = append(products, p)
+		productNDCs = append(productNDCs, p.ProductNDC)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, 0, err
 	}
 
-	return products, total, rows.Err()
+	// Batch-load packages for all products in a single query (avoids N+1).
+	if len(productNDCs) > 0 {
+		packageMap, err := q.getPackagesBatch(ctx, productNDCs)
+		if err == nil {
+			for i := range products {
+				products[i].Packages = packageMap[products[i].ProductNDC]
+			}
+		}
+	}
+
+	return products, total, nil
+}
+
+// getPackagesBatch loads packages for multiple product NDCs in a single query.
+func (q *QueryStore) getPackagesBatch(ctx context.Context, productNDCs []string) (map[string][]PackageResult, error) {
+	rows, err := q.db.Query(ctx, `
+		SELECT product_ndc, ndc_package_code, description, sample_package
+		FROM packages
+		WHERE product_ndc = ANY($1)
+		ORDER BY product_ndc, ndc_package_code
+	`, productNDCs)
+	if err != nil {
+		return nil, fmt.Errorf("batch querying packages: %w", err)
+	}
+	defer rows.Close()
+
+	result := make(map[string][]PackageResult)
+	for rows.Next() {
+		var productNDC string
+		var p PackageResult
+		if err := rows.Scan(&productNDC, &p.NDC, &p.Description, &p.Sample); err != nil {
+			return nil, fmt.Errorf("scanning batch package: %w", err)
+		}
+		result[productNDC] = append(result[productNDC], p)
+	}
+
+	return result, rows.Err()
 }
 
 // GetStats returns dataset statistics.
