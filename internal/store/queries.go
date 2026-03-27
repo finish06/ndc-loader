@@ -196,6 +196,66 @@ func (q *QueryStore) getPackages(ctx context.Context, productNDC string) ([]Pack
 	return packages, rows.Err()
 }
 
+// OpenFDASearch performs a search using a pre-built WHERE clause and returns full product
+// details with packages, suitable for transforming into the openFDA response format.
+func (q *QueryStore) OpenFDASearch(ctx context.Context, whereClause string, args []interface{}, limit, skip int) ([]ProductResult, int, error) {
+	if limit <= 0 || limit > 1000 {
+		limit = 1
+	}
+	if skip < 0 {
+		skip = 0
+	}
+
+	// Count total matches.
+	countSQL := fmt.Sprintf("SELECT COUNT(*) FROM products WHERE %s", whereClause)
+	var total int
+	if err := q.db.QueryRow(ctx, countSQL, args...).Scan(&total); err != nil {
+		return nil, 0, fmt.Errorf("counting openfda results: %w", err)
+	}
+
+	// Fetch products.
+	selectSQL := fmt.Sprintf(`
+		SELECT product_id, product_ndc, proprietary_name, nonproprietary_name,
+		       dosage_form, route, labeler_name, substance_name,
+		       strength, strength_unit, pharm_classes, dea_schedule,
+		       marketing_category, application_number
+		FROM products
+		WHERE %s
+		ORDER BY product_ndc
+		LIMIT %d OFFSET %d
+	`, whereClause, limit, skip)
+
+	rows, err := q.db.Query(ctx, selectSQL, args...)
+	if err != nil {
+		return nil, 0, fmt.Errorf("openfda search query: %w", err)
+	}
+	defer rows.Close()
+
+	var products []ProductResult
+	for rows.Next() {
+		var p ProductResult
+		var productID string
+		if err := rows.Scan(
+			&productID, &p.ProductNDC, &p.BrandName, &p.GenericName,
+			&p.DosageForm, &p.Route, &p.Manufacturer, &p.ActiveIngredient,
+			&p.Strength, &p.StrengthUnit, &p.PharmClasses, &p.DEASchedule,
+			&p.MarketingCategory, &p.ApplicationNumber,
+		); err != nil {
+			return nil, 0, fmt.Errorf("scanning openfda result: %w", err)
+		}
+
+		// Load packages for each product.
+		packages, err := q.getPackages(ctx, p.ProductNDC)
+		if err == nil {
+			p.Packages = packages
+		}
+
+		products = append(products, p)
+	}
+
+	return products, total, rows.Err()
+}
+
 // GetStats returns dataset statistics.
 func (q *QueryStore) GetStats(ctx context.Context) (*StatsResult, error) {
 	var s StatsResult

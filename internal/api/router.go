@@ -57,6 +57,10 @@ func NewRouter(
 			r.Get("/api/ndc/stats", queryHandler.GetStats)
 			r.Get("/api/ndc/{ndc}/packages", queryHandler.ListPackages)
 			r.Get("/api/ndc/{ndc}", queryHandler.LookupNDC)
+
+			// openFDA-compatible endpoint (drop-in replacement for drug-cash).
+			openFDAHandler := NewOpenFDAHandler(logger, queryStore)
+			r.Get("/api/openfda/ndc.json", openFDAHandler.HandleNDCJSON)
 		}
 	})
 
