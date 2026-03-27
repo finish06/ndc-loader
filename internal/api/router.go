@@ -9,6 +9,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/calebdunn/ndc-loader/internal/loader"
+	"github.com/calebdunn/ndc-loader/internal/store"
 )
 
 // CheckpointStoreProvider combines CheckpointQuerier and LastLoadInfoProvider
@@ -24,6 +25,7 @@ func NewRouter(
 	apiKeys []string,
 	orchestrator *loader.Orchestrator,
 	checkpointStore CheckpointStoreProvider,
+	queryStore *store.QueryStore,
 ) http.Handler {
 	r := chi.NewRouter()
 
@@ -44,9 +46,18 @@ func NewRouter(
 		r.Use(APIKeyAuth(apiKeys))
 
 		// Admin endpoints.
-		handler := NewAdminHandler(logger, orchestrator, checkpointStore)
-		r.Post("/api/admin/load", handler.TriggerLoad)
-		r.Get("/api/admin/load/{loadID}", handler.GetLoadStatus)
+		adminHandler := NewAdminHandler(logger, orchestrator, checkpointStore)
+		r.Post("/api/admin/load", adminHandler.TriggerLoad)
+		r.Get("/api/admin/load/{loadID}", adminHandler.GetLoadStatus)
+
+		// Query endpoints.
+		if queryStore != nil {
+			queryHandler := NewQueryHandler(logger, queryStore)
+			r.Get("/api/ndc/search", queryHandler.SearchNDC)
+			r.Get("/api/ndc/stats", queryHandler.GetStats)
+			r.Get("/api/ndc/{ndc}/packages", queryHandler.ListPackages)
+			r.Get("/api/ndc/{ndc}", queryHandler.LookupNDC)
+		}
 	})
 
 	return r

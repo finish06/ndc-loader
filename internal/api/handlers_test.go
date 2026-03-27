@@ -34,7 +34,7 @@ func TestHealthHandler(t *testing.T) {
 }
 
 func TestNewRouter_HealthNoAuth(t *testing.T) {
-	router := NewRouter(nil, []string{"secret-key"}, nil, nil)
+	router := NewRouter(nil, []string{"secret-key"}, nil, nil, nil)
 
 	// Health endpoint should work without API key.
 	req := httptest.NewRequest(http.MethodGet, "/health", nil)
@@ -47,7 +47,7 @@ func TestNewRouter_HealthNoAuth(t *testing.T) {
 }
 
 func TestNewRouter_AdminRequiresAuth(t *testing.T) {
-	router := NewRouter(nil, []string{"secret-key"}, nil, nil)
+	router := NewRouter(nil, []string{"secret-key"}, nil, nil, nil)
 
 	// Admin endpoint should require API key.
 	req := httptest.NewRequest(http.MethodPost, "/api/admin/load", bytes.NewReader([]byte("{}")))
@@ -62,7 +62,7 @@ func TestNewRouter_AdminRequiresAuth(t *testing.T) {
 func TestNewRouter_AdminWithAuth(t *testing.T) {
 	// Create a minimal router without orchestrator — it will panic on nil deref,
 	// but we can test that auth passes by checking we get past 401.
-	router := NewRouter(nil, []string{"secret-key"}, nil, nil)
+	router := NewRouter(nil, []string{"secret-key"}, nil, nil, nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/admin/load/test-load-id", nil)
 	req.Header.Set("X-API-Key", "secret-key")
