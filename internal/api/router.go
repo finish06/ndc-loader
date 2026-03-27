@@ -9,7 +9,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/calebdunn/ndc-loader/internal/loader"
-	"github.com/calebdunn/ndc-loader/internal/store"
 )
 
 // CheckpointStoreProvider combines CheckpointQuerier and LastLoadInfoProvider
@@ -25,7 +24,7 @@ func NewRouter(
 	apiKeys []string,
 	orchestrator *loader.Orchestrator,
 	checkpointStore CheckpointStoreProvider,
-	queryStore *store.QueryStore,
+	queryStore QueryProvider,
 ) http.Handler {
 	r := chi.NewRouter()
 

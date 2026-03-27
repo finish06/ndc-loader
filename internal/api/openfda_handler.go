@@ -6,18 +6,16 @@ import (
 	"net/http"
 	"strconv"
 	"time"
-
-	"github.com/calebdunn/ndc-loader/internal/store"
 )
 
 // OpenFDAHandler handles the openFDA-compatible API endpoint.
 type OpenFDAHandler struct {
 	logger     *slog.Logger
-	queryStore *store.QueryStore
+	queryStore QueryProvider
 }
 
 // NewOpenFDAHandler creates a new OpenFDAHandler.
-func NewOpenFDAHandler(logger *slog.Logger, queryStore *store.QueryStore) *OpenFDAHandler {
+func NewOpenFDAHandler(logger *slog.Logger, queryStore QueryProvider) *OpenFDAHandler {
 	return &OpenFDAHandler{
 		logger:     logger,
 		queryStore: queryStore,

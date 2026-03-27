@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"log/slog"
 	"net/http"
@@ -11,14 +12,24 @@ import (
 	"github.com/calebdunn/ndc-loader/internal/store"
 )
 
+// QueryProvider abstracts query operations for unit testing.
+type QueryProvider interface {
+	LookupByProductNDC(ctx context.Context, variants []string) (*store.ProductResult, error)
+	LookupByPackageNDC(ctx context.Context, variants []string) (*store.ProductResult, string, error)
+	SearchProducts(ctx context.Context, query string, limit, offset int) ([]store.SearchResult, int, error)
+	GetPackagesByProductNDC(ctx context.Context, productNDC string) ([]store.PackageResult, error)
+	GetStats(ctx context.Context) (*store.StatsResult, error)
+	OpenFDASearch(ctx context.Context, whereClause string, args []interface{}, limit, skip int) ([]store.ProductResult, int, error)
+}
+
 // QueryHandler handles NDC query API endpoints.
 type QueryHandler struct {
 	logger     *slog.Logger
-	queryStore *store.QueryStore
+	queryStore QueryProvider
 }
 
 // NewQueryHandler creates a new QueryHandler.
-func NewQueryHandler(logger *slog.Logger, queryStore *store.QueryStore) *QueryHandler {
+func NewQueryHandler(logger *slog.Logger, queryStore QueryProvider) *QueryHandler {
 	return &QueryHandler{
 		logger:     logger,
 		queryStore: queryStore,

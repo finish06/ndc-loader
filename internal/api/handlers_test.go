@@ -60,27 +60,18 @@ func TestNewRouter_AdminRequiresAuth(t *testing.T) {
 }
 
 func TestNewRouter_AdminWithAuth(t *testing.T) {
-	// Create a minimal router without orchestrator — it will panic on nil deref,
-	// but we can test that auth passes by checking we get past 401.
-	router := NewRouter(nil, []string{"secret-key"}, nil, nil, nil)
+	mockCS := &mockCheckpointStoreProvider{
+		mockCheckpointQuerier:    newMockCheckpointQuerier(),
+		mockLastLoadInfoProvider: &mockLastLoadInfoProvider{},
+	}
+	router := NewRouter(nil, []string{"secret-key"}, nil, mockCS, nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/admin/load/test-load-id", nil)
 	req.Header.Set("X-API-Key", "secret-key")
 	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
 
-	// This will hit the handler which needs checkpointStore — it will panic.
-	// We use recover to check that auth passed.
-	func() {
-		defer func() {
-			if r := recover(); r != nil {
-				// Expected — handler panics because checkpointStore is nil.
-				// But we got past auth, which is what we're testing.
-			}
-		}()
-		router.ServeHTTP(rec, req)
-	}()
-
-	// If we got a 401, auth failed. Anything else means auth passed.
+	// Should get 404 (no checkpoints found) not 401.
 	if rec.Code == http.StatusUnauthorized {
 		t.Error("expected to pass auth with valid key, got 401")
 	}
