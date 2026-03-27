@@ -139,18 +139,154 @@ migrations/             SQL schema (embedded, auto-applied on startup)
 datasets.yaml           Configurable dataset sources
 ```
 
+### System Overview
+
+```mermaid
+graph LR
+    FDA[(FDA Bulk Downloads)] -->|Daily cron| Loader
+    subgraph ndc-loader
+        Loader[Data Loader] -->|COPY| PG[(PostgreSQL)]
+        PG --> API[REST API]
+    end
+    API -->|JSON| DC[drug-cash]
+    API -->|JSON| MS[Microservices]
+    API -->|/metrics| Prom[Prometheus]
+```
+
 ### Data Pipeline
 
+```mermaid
+flowchart TD
+    A[Cron Trigger / Manual POST] --> B[Download FDA ZIPs]
+    B -->|Retry with backoff| B
+    B -->|Success| C[Extract to temp dir]
+    C --> D[Parse tab-delimited files]
+    D -->|UTF-8 sanitize| D1[Sanitize invalid bytes]
+    D1 --> E[Map columns + coerce types]
+    E -->|Date: YYYYMMDD -> time.Time| E
+    E -->|Bool: Y/N -> bool| E
+    E --> F[Bulk COPY into staging table]
+    F --> G{Row count safe?}
+    G -->|Drop > 20%| H[Abort - keep existing data]
+    G -->|OK| I[Atomic swap: staging -> live]
+    I --> J[tsvector trigger updates search index]
+    J --> K[Record checkpoint metadata]
+    K --> L{More tables?}
+    L -->|Yes| D
+    L -->|No| M[Load complete]
+
+    style H fill:#ef4444,color:#fff
+    style M fill:#22c55e,color:#fff
 ```
-Cron trigger (daily 3am)
-  -> Download FDA ZIP files (with retry + exponential backoff)
-  -> Extract to temp directory
-  -> Parse tab-delimited files (with UTF-8 sanitization)
-  -> Map columns to DB schema (date/boolean coercion)
-  -> Bulk COPY into staging tables
-  -> Atomic swap (staging -> live)
-  -> Update search vectors (tsvector trigger)
-  -> Record checkpoint metadata
+
+### Request Flow
+
+```mermaid
+flowchart LR
+    Client -->|X-API-Key| MW[Auth Middleware]
+    MW -->|401| Reject[Unauthorized]
+    MW -->|Valid| Router
+
+    Router --> Q1["GET /api/ndc/{ndc}"]
+    Router --> Q2["GET /api/ndc/search"]
+    Router --> Q3["GET /api/ndc/{ndc}/packages"]
+    Router --> Q4["GET /api/ndc/stats"]
+    Router --> A1["POST /api/admin/load"]
+
+    Q1 --> NDC[NDC Normalizer]
+    NDC -->|2-segment| PL[Product Lookup]
+    NDC -->|3-segment| PKL[Package Lookup]
+    NDC -->|10-digit| VAR[Try 4-4-2 / 5-3-2 / 5-4-1]
+    VAR --> PL
+    VAR --> PKL
+
+    PL --> DB[(PostgreSQL)]
+    PKL --> DB
+    Q2 -->|tsvector + ts_rank| DB
+    Q3 --> DB
+    Q4 --> DB
+
+    style Reject fill:#ef4444,color:#fff
+```
+
+### Data Model
+
+```mermaid
+erDiagram
+    products ||--o{ packages : "product_ndc"
+    products }o--o| applications : "application_number ~ appl_no"
+    applications ||--o{ drugsfda_products : "appl_no"
+    applications ||--o{ submissions : "appl_no"
+    applications ||--o{ marketing_status : "appl_no"
+    applications ||--o{ te_codes : "appl_no"
+
+    products {
+        text product_id PK
+        text product_ndc
+        text proprietary_name
+        text nonproprietary_name
+        text labeler_name
+        text application_number
+        tsvector search_vector
+    }
+
+    packages {
+        serial id PK
+        text product_ndc
+        text ndc_package_code
+        text description
+    }
+
+    applications {
+        text appl_no PK
+        text appl_type
+        text sponsor_name
+    }
+
+    drugsfda_products {
+        serial id PK
+        text appl_no
+        text drug_name
+        text active_ingredient
+    }
+
+    submissions {
+        serial id PK
+        text appl_no
+        text submission_type
+        text submission_status
+    }
+
+    marketing_status {
+        serial id PK
+        text appl_no
+        text marketing_status_id
+    }
+
+    te_codes {
+        serial id PK
+        text appl_no
+        text te_code
+    }
+```
+
+### Checkpoint & Recovery
+
+```mermaid
+stateDiagram-v2
+    [*] --> Pending
+    Pending --> Downloading
+    Downloading --> Downloaded: Success
+    Downloading --> Failed: Error (retry exhausted)
+    Downloaded --> Loading
+    Loading --> Loaded: Atomic swap OK
+    Loading --> Failed: Row count drop / DB error
+    Failed --> Downloading: Resume load
+
+    note right of Failed
+        On resume, skip tables
+        with status = Loaded
+    end note
 ```
 
 ### Resilience
