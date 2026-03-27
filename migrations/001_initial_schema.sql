@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS products (
     product_ndc         TEXT NOT NULL,
     product_type        TEXT,
     proprietary_name    TEXT,
+    proprietary_name_suffix TEXT,
     nonproprietary_name TEXT,
     dosage_form         TEXT,
     route               TEXT,
@@ -28,7 +29,7 @@ CREATE TABLE IF NOT EXISTS products (
 -- NDC Directory: Packages
 CREATE TABLE IF NOT EXISTS packages (
     id                  SERIAL PRIMARY KEY,
-    product_id          TEXT NOT NULL REFERENCES products(product_id) ON DELETE CASCADE,
+    product_id          TEXT NOT NULL,
     product_ndc         TEXT NOT NULL,
     ndc_package_code    TEXT NOT NULL,
     description         TEXT,
@@ -42,14 +43,14 @@ CREATE TABLE IF NOT EXISTS packages (
 CREATE TABLE IF NOT EXISTS applications (
     appl_no             TEXT PRIMARY KEY,
     appl_type           TEXT,
-    sponsor_name        TEXT,
-    most_recent_submission DATE
+    appl_public_notes   TEXT,
+    sponsor_name        TEXT
 );
 
 -- Drugs@FDA: Products
 CREATE TABLE IF NOT EXISTS drugsfda_products (
     id                  SERIAL PRIMARY KEY,
-    appl_no             TEXT NOT NULL REFERENCES applications(appl_no) ON DELETE CASCADE,
+    appl_no             TEXT NOT NULL,
     product_no          TEXT NOT NULL,
     form                TEXT,
     strength            TEXT,
@@ -62,38 +63,30 @@ CREATE TABLE IF NOT EXISTS drugsfda_products (
 -- Drugs@FDA: Submissions
 CREATE TABLE IF NOT EXISTS submissions (
     id                              SERIAL PRIMARY KEY,
-    appl_no                         TEXT NOT NULL REFERENCES applications(appl_no) ON DELETE CASCADE,
+    appl_no                         TEXT NOT NULL,
+    submission_class_code_id        TEXT,
     submission_type                 TEXT,
     submission_no                   TEXT,
     submission_status               TEXT,
     submission_status_date          DATE,
-    submission_class_code           TEXT,
-    submission_class_code_description TEXT
+    submissions_public_notes        TEXT,
+    review_priority                 TEXT
 );
 
 -- Drugs@FDA: Marketing Status
 CREATE TABLE IF NOT EXISTS marketing_status (
     id                  SERIAL PRIMARY KEY,
-    appl_no             TEXT NOT NULL REFERENCES applications(appl_no) ON DELETE CASCADE,
-    product_no          TEXT,
     marketing_status_id TEXT,
-    marketing_status    TEXT
-);
-
--- Drugs@FDA: Active Ingredients
-CREATE TABLE IF NOT EXISTS active_ingredients (
-    id              SERIAL PRIMARY KEY,
-    appl_no         TEXT NOT NULL REFERENCES applications(appl_no) ON DELETE CASCADE,
-    product_no      TEXT,
-    ingredient_name TEXT,
-    strength        TEXT
+    appl_no             TEXT NOT NULL,
+    product_no          TEXT
 );
 
 -- Drugs@FDA: TE Codes
 CREATE TABLE IF NOT EXISTS te_codes (
     id          SERIAL PRIMARY KEY,
-    appl_no     TEXT NOT NULL REFERENCES applications(appl_no) ON DELETE CASCADE,
+    appl_no     TEXT NOT NULL,
     product_no  TEXT,
+    marketing_status_id TEXT,
     te_code     TEXT
 );
 
@@ -124,7 +117,6 @@ CREATE INDEX IF NOT EXISTS idx_packages_product_ndc ON packages(product_ndc);
 CREATE INDEX IF NOT EXISTS idx_drugsfda_products_appno ON drugsfda_products(appl_no);
 CREATE INDEX IF NOT EXISTS idx_submissions_appno ON submissions(appl_no);
 CREATE INDEX IF NOT EXISTS idx_marketing_status_appno ON marketing_status(appl_no);
-CREATE INDEX IF NOT EXISTS idx_active_ingredients_appno ON active_ingredients(appl_no);
 CREATE INDEX IF NOT EXISTS idx_te_codes_appno ON te_codes(appl_no);
 
 -- Indexes: Load Checkpoints

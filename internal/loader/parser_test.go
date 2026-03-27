@@ -13,8 +13,8 @@ func TestParseTabDelimited_ProductSample(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	if len(result.Headers) != 19 {
-		t.Errorf("expected 19 headers, got %d: %v", len(result.Headers), result.Headers)
+	if len(result.Headers) != 20 {
+		t.Errorf("expected 20 headers, got %d: %v", len(result.Headers), result.Headers)
 	}
 	if result.Headers[0] != "PRODUCTID" {
 		t.Errorf("expected first header PRODUCTID, got %s", result.Headers[0])
@@ -101,9 +101,9 @@ func TestMapColumns_ProductMapping(t *testing.T) {
 
 	targetColumns := []string{
 		"product_id", "product_ndc", "product_type", "proprietary_name",
-		"nonproprietary_name", "dosage_form", "route", "labeler_name",
-		"substance_name", "strength", "strength_unit", "pharm_classes",
-		"dea_schedule", "marketing_category", "application_number",
+		"proprietary_name_suffix", "nonproprietary_name", "dosage_form", "route",
+		"labeler_name", "substance_name", "strength", "strength_unit",
+		"pharm_classes", "dea_schedule", "marketing_category", "application_number",
 		"marketing_start", "marketing_end", "ndc_exclude", "listing_certified",
 	}
 
@@ -129,18 +129,18 @@ func TestMapColumns_ProductMapping(t *testing.T) {
 	if row[3] != "Metformin Hydrochloride" {
 		t.Errorf("expected proprietary_name Metformin Hydrochloride, got %v", row[3])
 	}
-	if row[14] != "ANDA076543" {
-		t.Errorf("expected application_number ANDA076543, got %v", row[14])
+	if row[15] != "ANDA076543" {
+		t.Errorf("expected application_number ANDA076543, got %v", row[15])
 	}
 
-	// Check date coercion (marketing_start is a date column).
-	if row[15] == nil {
+	// Check date coercion (marketing_start is a date column, index 16).
+	if row[16] == nil {
 		t.Error("expected marketing_start to be non-nil")
 	}
 
-	// Check boolean coercion (ndc_exclude is a bool column).
-	if row[17] != false {
-		t.Errorf("expected ndc_exclude false, got %v", row[17])
+	// Check boolean coercion (ndc_exclude is a bool column, index 18).
+	if row[18] != false {
+		t.Errorf("expected ndc_exclude false, got %v", row[18])
 	}
 }
 

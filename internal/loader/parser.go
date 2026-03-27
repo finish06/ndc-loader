@@ -1,6 +1,7 @@
 package loader
 
 import (
+	"bytes"
 	"encoding/csv"
 	"fmt"
 	"io"
@@ -8,6 +9,7 @@ import (
 	"os"
 	"strings"
 	"time"
+	"unicode/utf8"
 )
 
 // ParseResult holds the parsed rows and header mapping from a data file.
@@ -21,13 +23,18 @@ type ParseResult struct {
 // It handles unexpected columns gracefully (logs warning, maps known columns).
 // Malformed rows are skipped with a warning.
 func ParseTabDelimited(filePath string, delimiter rune, hasHeader bool) (*ParseResult, error) {
-	f, err := os.Open(filePath)
+	rawData, err := os.ReadFile(filePath)
 	if err != nil {
-		return nil, fmt.Errorf("opening file %s: %w", filePath, err)
+		return nil, fmt.Errorf("reading file %s: %w", filePath, err)
 	}
-	defer f.Close()
 
-	reader := csv.NewReader(f)
+	// Sanitize invalid UTF-8 sequences (FDA data sometimes contains Windows-1252 bytes).
+	if !utf8.Valid(rawData) {
+		rawData = sanitizeUTF8(rawData)
+		slog.Warn("sanitized invalid UTF-8 bytes", "file", filePath)
+	}
+
+	reader := csv.NewReader(bytes.NewReader(rawData))
 	reader.Comma = delimiter
 	reader.LazyQuotes = true
 	reader.FieldsPerRecord = -1 // Allow variable number of fields.
@@ -198,4 +205,22 @@ func parseBool(val string) interface{} {
 	default:
 		return false
 	}
+}
+
+// sanitizeUTF8 replaces invalid UTF-8 byte sequences with the Unicode
+// replacement character. FDA data sometimes contains Windows-1252 encoded
+// characters (e.g., 0x92 for right single quote, 0xbf for inverted question mark).
+func sanitizeUTF8(data []byte) []byte {
+	var buf bytes.Buffer
+	buf.Grow(len(data))
+	for len(data) > 0 {
+		r, size := utf8.DecodeRune(data)
+		if r == utf8.RuneError && size == 1 {
+			buf.WriteRune('\uFFFD')
+		} else {
+			buf.WriteRune(r)
+		}
+		data = data[size:]
+	}
+	return buf.Bytes()
 }

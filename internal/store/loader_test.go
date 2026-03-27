@@ -53,7 +53,7 @@ func TestCheckRowCountSafety_RowCountIncrease(t *testing.T) {
 func TestGetTableColumns_KnownTables(t *testing.T) {
 	tables := []string{
 		"products", "packages", "applications", "drugsfda_products",
-		"submissions", "marketing_status", "active_ingredients", "te_codes",
+		"submissions", "marketing_status", "te_codes",
 	}
 
 	for _, table := range tables {

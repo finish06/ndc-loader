@@ -31,9 +31,9 @@ type TableColumns struct {
 var knownTables = map[string][]string{
 	"products": {
 		"product_id", "product_ndc", "product_type", "proprietary_name",
-		"nonproprietary_name", "dosage_form", "route", "labeler_name",
-		"substance_name", "strength", "strength_unit", "pharm_classes",
-		"dea_schedule", "marketing_category", "application_number",
+		"proprietary_name_suffix", "nonproprietary_name", "dosage_form", "route",
+		"labeler_name", "substance_name", "strength", "strength_unit",
+		"pharm_classes", "dea_schedule", "marketing_category", "application_number",
 		"marketing_start", "marketing_end", "ndc_exclude", "listing_certified",
 	},
 	"packages": {
@@ -41,24 +41,22 @@ var knownTables = map[string][]string{
 		"marketing_start", "marketing_end", "ndc_exclude", "sample_package",
 	},
 	"applications": {
-		"appl_no", "appl_type", "sponsor_name", "most_recent_submission",
+		"appl_no", "appl_type", "appl_public_notes", "sponsor_name",
 	},
 	"drugsfda_products": {
 		"appl_no", "product_no", "form", "strength",
 		"reference_drug", "drug_name", "active_ingredient", "reference_standard",
 	},
 	"submissions": {
-		"appl_no", "submission_type", "submission_no", "submission_status",
-		"submission_status_date", "submission_class_code", "submission_class_code_description",
+		"appl_no", "submission_class_code_id", "submission_type", "submission_no",
+		"submission_status", "submission_status_date", "submissions_public_notes",
+		"review_priority",
 	},
 	"marketing_status": {
-		"appl_no", "product_no", "marketing_status_id", "marketing_status",
-	},
-	"active_ingredients": {
-		"appl_no", "product_no", "ingredient_name", "strength",
+		"marketing_status_id", "appl_no", "product_no",
 	},
 	"te_codes": {
-		"appl_no", "product_no", "te_code",
+		"appl_no", "product_no", "marketing_status_id", "te_code",
 	},
 }
 

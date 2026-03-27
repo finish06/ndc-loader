@@ -34,11 +34,7 @@ datasets:
         table: marketing_status
         delimiter: "\t"
         has_header: true
-      - filename: ActionTypes_Lookup.txt
-        table: active_ingredients
-        delimiter: "\t"
-        has_header: true
-      - filename: TECodes.txt
+      - filename: TE.txt
         table: te_codes
         delimiter: "\t"
         has_header: true

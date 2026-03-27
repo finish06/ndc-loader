@@ -81,7 +81,7 @@ func TestMapColumns_ApplicationsMapping(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	targetColumns := []string{"appl_no", "appl_type", "sponsor_name", "most_recent_submission"}
+	targetColumns := []string{"appl_no", "appl_type", "appl_public_notes", "sponsor_name"}
 	mapping := headerMappings["applications"]
 	rows, err := MapColumns(parsed, targetColumns, mapping)
 	if err != nil {
@@ -99,12 +99,12 @@ func TestMapColumns_ApplicationsMapping(t *testing.T) {
 	if rows[0][1] != "ANDA" {
 		t.Errorf("expected appl_type ANDA, got %v", rows[0][1])
 	}
-	if rows[0][2] != "ELI LILLY AND CO" {
-		t.Errorf("expected sponsor ELI LILLY AND CO, got %v", rows[0][2])
+	// appl_public_notes is empty in test data.
+	if rows[0][2] != nil {
+		t.Errorf("expected nil appl_public_notes, got %v", rows[0][2])
 	}
-	// most_recent_submission should be a parsed date.
-	if rows[0][3] == nil {
-		t.Error("expected non-nil most_recent_submission date")
+	if rows[0][3] != "ELI LILLY AND CO" {
+		t.Errorf("expected sponsor ELI LILLY AND CO, got %v", rows[0][3])
 	}
 }
 

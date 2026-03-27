@@ -32,8 +32,8 @@ func TestLoadDatasetsConfig_Valid(t *testing.T) {
 	if drugsfda.Name != "drugsfda" {
 		t.Errorf("expected second dataset name drugsfda, got %s", drugsfda.Name)
 	}
-	if len(drugsfda.Files) != 6 {
-		t.Errorf("expected 6 files for drugsfda, got %d", len(drugsfda.Files))
+	if len(drugsfda.Files) != 5 {
+		t.Errorf("expected 5 files for drugsfda, got %d", len(drugsfda.Files))
 	}
 }
 

@@ -64,7 +64,7 @@ func filterDatasetsHelper(datasets []modelDatasetConfig, names []string) []model
 func TestHeaderMappings_AllTablesExist(t *testing.T) {
 	expectedTables := []string{
 		"products", "packages", "applications", "drugsfda_products",
-		"submissions", "marketing_status", "active_ingredients", "te_codes",
+		"submissions", "marketing_status", "te_codes",
 	}
 
 	for _, table := range expectedTables {
@@ -84,9 +84,9 @@ func TestHeaderMappings_ProductsHasAllColumns(t *testing.T) {
 
 	expectedKeys := []string{
 		"product_id", "product_ndc", "product_type", "proprietary_name",
-		"nonproprietary_name", "dosage_form", "route", "labeler_name",
-		"substance_name", "strength", "strength_unit", "pharm_classes",
-		"dea_schedule", "marketing_category", "application_number",
+		"proprietary_name_suffix", "nonproprietary_name", "dosage_form", "route",
+		"labeler_name", "substance_name", "strength", "strength_unit",
+		"pharm_classes", "dea_schedule", "marketing_category", "application_number",
 		"marketing_start", "marketing_end", "ndc_exclude", "listing_certified",
 	}
 
