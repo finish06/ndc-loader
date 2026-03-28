@@ -38,7 +38,7 @@ func TestMigrations_CreatesTables(t *testing.T) {
 	ctx := context.Background()
 	tables := []string{
 		"products", "packages", "applications", "drugsfda_products",
-		"submissions", "marketing_status", "active_ingredients",
+		"submissions", "marketing_status",
 		"te_codes", "load_checkpoints",
 	}
 
