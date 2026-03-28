@@ -53,6 +53,8 @@
 <!-- These are processed and archived during /add:retro -->
 
 - 2026-03-26: Cycle 2 complete. E2E FDA validation + Query API. 2 features VERIFIED, 5 bugs fixed, 11 E2E tests. M1 closed with 10/10 criteria met.
+- 2026-03-27: Cycle 3 complete. openFDA-compat API for drug-cash. 14/14 AC, format parity verified against live openFDA API, 9 E2E + 22 unit tests. M2 closed with 6/6 criteria met.
+- 2026-03-27: Performance optimizations applied: streaming parser (single-pass), O(1) table swap (DROP+RENAME vs INSERT SELECT), batch package loading (eliminates N+1 queries).
 
 ## Profile Update Candidates
 <!-- Cross-project patterns flagged for promotion to ~/.claude/add/profile.md -->
