@@ -114,7 +114,7 @@ jobs:
         id: deploy
         if: steps.version.outputs.is_release == 'false' && success()
         run: |
-          BODY='{"app":"ndc-loader","ref":"${{ github.ref }}","sha":"${{ github.sha }}","tag":"${{ steps.version.outputs.tag }}"}'
+          BODY='{"app":"rx-dag","ref":"${{ github.ref }}","sha":"${{ github.sha }}","tag":"${{ steps.version.outputs.tag }}"}'
           SIGNATURE="sha256=$(echo -n "$BODY" | openssl dgst -sha256 -hmac "${{ secrets.WEBHOOK_SECRET }}" | awk '{print $NF}')"
           echo "Triggering staging deploy..."
           HTTP_CODE=$(curl -s -o /tmp/deploy-response.json -w "%{http_code}" \
