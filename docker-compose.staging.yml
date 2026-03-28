@@ -1,0 +1,56 @@
+networks:
+  internal:
+    name: internal
+    driver: bridge
+    external: true
+
+services:
+  ndc-loader-postgres:
+    image: postgres:16-alpine
+    container_name: ndc-loader-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-ndc}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-ndc}
+    volumes:
+      - ndc-loader-pg-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-ndc} -d ${POSTGRES_DB:-ndc}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+    restart: unless-stopped
+    networks:
+      - internal
+
+  ndc-loader:
+    image: dockerhub.calebdunn.tech/finish06/ndc-loader:beta
+    container_name: ndc-loader
+    ports:
+      - "8081:8081"
+    environment:
+      - DATABASE_URL=postgres://${POSTGRES_USER:-ndc}:${POSTGRES_PASSWORD}@ndc-loader-postgres:5432/${POSTGRES_DB:-ndc}?sslmode=disable
+      - LISTEN_ADDR=:8081
+      - LOAD_SCHEDULE=${LOAD_SCHEDULE:-0 3 * * *}
+      - API_KEYS=${API_KEYS}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - LOG_FORMAT=json
+      - DOWNLOAD_DIR=/tmp/fda-data
+      - DATASETS_FILE=/app/datasets.yaml
+    depends_on:
+      ndc-loader-postgres:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+    restart: unless-stopped
+    networks:
+      - internal
+
+volumes:
+  ndc-loader-pg-data:
