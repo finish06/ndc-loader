@@ -1,0 +1,534 @@
+basePath: /
+definitions:
+  api.CheckpointStatus:
+    properties:
+      dataset:
+        type: string
+      duration_seconds:
+        type: number
+      error:
+        type: string
+      row_count:
+        type: integer
+      status:
+        type: string
+      table:
+        type: string
+    type: object
+  api.LoadStatusResponse:
+    properties:
+      checkpoints:
+        items:
+          $ref: '#/definitions/api.CheckpointStatus'
+        type: array
+      load_id:
+        type: string
+      started_at:
+        type: string
+      status:
+        type: string
+    type: object
+  api.OpenFDAActiveIngredient:
+    properties:
+      name:
+        type: string
+      strength:
+        type: string
+    type: object
+  api.OpenFDAError:
+    properties:
+      error:
+        $ref: '#/definitions/api.OpenFDAErrorDetail'
+    type: object
+  api.OpenFDAErrorDetail:
+    properties:
+      code:
+        type: string
+      message:
+        type: string
+    type: object
+  api.OpenFDAMeta:
+    properties:
+      disclaimer:
+        type: string
+      last_updated:
+        type: string
+      license:
+        type: string
+      results:
+        $ref: '#/definitions/api.OpenFDAPagination'
+      terms:
+        type: string
+    type: object
+  api.OpenFDANested:
+    properties:
+      is_original_packager:
+        items:
+          type: boolean
+        type: array
+      manufacturer_name:
+        items:
+          type: string
+        type: array
+      rxcui:
+        items:
+          type: string
+        type: array
+      spl_set_id:
+        items:
+          type: string
+        type: array
+      unii:
+        items:
+          type: string
+        type: array
+      upc:
+        items:
+          type: string
+        type: array
+    type: object
+  api.OpenFDAPackaging:
+    properties:
+      description:
+        type: string
+      marketing_start_date:
+        type: string
+      package_ndc:
+        type: string
+      sample:
+        type: boolean
+    type: object
+  api.OpenFDAPagination:
+    properties:
+      limit:
+        type: integer
+      skip:
+        type: integer
+      total:
+        type: integer
+    type: object
+  api.OpenFDAProduct:
+    properties:
+      active_ingredients:
+        items:
+          $ref: '#/definitions/api.OpenFDAActiveIngredient'
+        type: array
+      application_number:
+        type: string
+      brand_name:
+        type: string
+      brand_name_base:
+        type: string
+      dosage_form:
+        type: string
+      finished:
+        type: boolean
+      generic_name:
+        type: string
+      labeler_name:
+        type: string
+      marketing_category:
+        type: string
+      marketing_start_date:
+        type: string
+      openfda:
+        $ref: '#/definitions/api.OpenFDANested'
+      packaging:
+        items:
+          $ref: '#/definitions/api.OpenFDAPackaging'
+        type: array
+      pharm_class:
+        items:
+          type: string
+        type: array
+      product_id:
+        type: string
+      product_ndc:
+        type: string
+      product_type:
+        type: string
+      route:
+        items:
+          type: string
+        type: array
+      spl_id:
+        type: string
+    type: object
+  api.OpenFDAResponse:
+    properties:
+      meta:
+        $ref: '#/definitions/api.OpenFDAMeta'
+      results:
+        items:
+          $ref: '#/definitions/api.OpenFDAProduct'
+        type: array
+    type: object
+  api.TriggerLoadRequest:
+    properties:
+      datasets:
+        items:
+          type: string
+        type: array
+      force:
+        type: boolean
+    type: object
+  api.TriggerLoadResponse:
+    properties:
+      datasets:
+        items:
+          type: string
+        type: array
+      load_id:
+        type: string
+      status:
+        type: string
+    type: object
+  store.PackageResult:
+    properties:
+      description:
+        type: string
+      ndc:
+        type: string
+      sample:
+        type: boolean
+    type: object
+  store.ProductResult:
+    properties:
+      active_ingredients:
+        type: string
+      application_number:
+        type: string
+      brand_name:
+        type: string
+      dea_schedule:
+        type: string
+      dosage_form:
+        type: string
+      generic_name:
+        type: string
+      manufacturer:
+        type: string
+      marketing_category:
+        type: string
+      matched_package:
+        type: string
+      packages:
+        items:
+          $ref: '#/definitions/store.PackageResult'
+        type: array
+      pharm_classes:
+        type: string
+      product_ndc:
+        type: string
+      route:
+        type: string
+      strength:
+        type: string
+      strength_unit:
+        type: string
+    type: object
+  store.StatsResult:
+    properties:
+      applications:
+        type: integer
+      last_loaded:
+        type: string
+      load_duration_seconds:
+        type: number
+      packages:
+        type: integer
+      products:
+        type: integer
+    type: object
+host: localhost:8081
+info:
+  contact: {}
+  description: FDA NDC Directory bulk loader and REST API. Ingests NDC Directory and
+    Drugs@FDA datasets daily, serves via REST with full-text search and NDC format
+    normalization.
+  title: ndc-loader API
+  version: "1.0"
+paths:
+  /api/admin/load:
+    post:
+      consumes:
+      - application/json
+      description: Start a manual FDA data load. Returns 409 if a load is already
+        in progress.
+      parameters:
+      - description: Load options
+        in: body
+        name: body
+        schema:
+          $ref: '#/definitions/api.TriggerLoadRequest'
+      produces:
+      - application/json
+      responses:
+        "202":
+          description: Accepted
+          schema:
+            $ref: '#/definitions/api.TriggerLoadResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: Conflict
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - ApiKeyAuth: []
+      summary: Trigger a data load
+      tags:
+      - Admin
+  /api/admin/load/{loadID}:
+    get:
+      description: Returns checkpoint progress for a specific load operation.
+      parameters:
+      - description: Load ID (UUID)
+        in: path
+        name: loadID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.LoadStatusResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - ApiKeyAuth: []
+      summary: Check load status
+      tags:
+      - Admin
+  /api/ndc/{ndc}:
+    get:
+      description: Accepts any NDC format (hyphenated, unhyphenated, 2-segment, 3-segment).
+        Returns product details with packages.
+      parameters:
+      - description: NDC code (e.g. 0002-1433, 0002-1433-61, 00021433)
+        in: path
+        name: ndc
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/store.ProductResult'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - ApiKeyAuth: []
+      summary: Look up a product by NDC code
+      tags:
+      - Query
+  /api/ndc/{ndc}/packages:
+    get:
+      description: Returns all package configurations for a given product NDC.
+      parameters:
+      - description: Product NDC (e.g. 0002-1433)
+        in: path
+        name: ndc
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - ApiKeyAuth: []
+      summary: List packages for a product NDC
+      tags:
+      - Query
+  /api/ndc/search:
+    get:
+      description: Full-text search across brand names, generic names, and manufacturers.
+        Supports prefix matching.
+      parameters:
+      - description: Search query (e.g. metformin)
+        in: query
+        name: q
+        required: true
+        type: string
+      - default: 50
+        description: Results per page
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Pagination offset
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - ApiKeyAuth: []
+      summary: Search drugs by name
+      tags:
+      - Query
+  /api/ndc/stats:
+    get:
+      description: Returns row counts, last load time, and data freshness.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/store.StatsResult'
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - ApiKeyAuth: []
+      summary: Dataset statistics
+      tags:
+      - Query
+  /api/openfda/ndc.json:
+    get:
+      description: Drop-in replacement for the openFDA /drug/ndc.json endpoint. Returns
+        identical response format. Supports openFDA search syntax (field:value, exact
+        phrases, AND via +).
+      parameters:
+      - description: openFDA search query (e.g. brand_name:metformin, product_ndc:\
+        in: query
+        name: search
+        required: true
+        type: string
+      - default: 1
+        description: Results per page (default 1, max 1000)
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Pagination offset
+        in: query
+        name: skip
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.OpenFDAResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.OpenFDAError'
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.OpenFDAError'
+      security:
+      - ApiKeyAuth: []
+      summary: openFDA-compatible NDC search
+      tags:
+      - OpenFDA
+  /health:
+    get:
+      description: Returns service health status and data freshness. Degrades to "degraded"
+        when data is >48 hours old. No authentication required.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Health check
+      tags:
+      - Operations
+securityDefinitions:
+  ApiKeyAuth:
+    in: header
+    name: X-API-Key
+    type: apiKey
+swagger: "2.0"
