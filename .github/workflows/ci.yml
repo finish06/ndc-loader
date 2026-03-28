@@ -107,8 +107,8 @@ jobs:
           push: true
           platforms: linux/amd64
           tags: |
-            dockerhub.calebdunn.tech/finish06/ndc-loader:beta
-            ghcr.io/finish06/ndc-loader:beta
+            dockerhub.calebdunn.tech/finish06/rx-dag:beta
+            ghcr.io/finish06/rx-dag:beta
 
       - name: Trigger staging deploy
         id: deploy
@@ -140,7 +140,7 @@ jobs:
           push: true
           platforms: linux/amd64
           tags: |
-            dockerhub.calebdunn.tech/finish06/ndc-loader:${{ steps.version.outputs.tag }}
-            dockerhub.calebdunn.tech/finish06/ndc-loader:latest
-            ghcr.io/finish06/ndc-loader:${{ steps.version.outputs.tag }}
-            ghcr.io/finish06/ndc-loader:latest
+            dockerhub.calebdunn.tech/finish06/rx-dag:${{ steps.version.outputs.tag }}
+            dockerhub.calebdunn.tech/finish06/rx-dag:latest
+            ghcr.io/finish06/rx-dag:${{ steps.version.outputs.tag }}
+            ghcr.io/finish06/rx-dag:latest

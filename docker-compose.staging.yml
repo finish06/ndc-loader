@@ -28,7 +28,7 @@ services:
       - internal
 
   ndc-loader:
-    image: dockerhub.calebdunn.tech/finish06/ndc-loader:beta
+    image: dockerhub.calebdunn.tech/finish06/rx-dag:beta
     container_name: ndc-loader
     ports:
       - "8081:8081"
