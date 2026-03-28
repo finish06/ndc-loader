@@ -37,6 +37,18 @@ func NewQueryHandler(logger *slog.Logger, queryStore QueryProvider) *QueryHandle
 }
 
 // LookupNDC handles GET /api/ndc/{ndc}.
+//
+//	@Summary		Look up a product by NDC code
+//	@Description	Accepts any NDC format (hyphenated, unhyphenated, 2-segment, 3-segment). Returns product details with packages.
+//	@Tags			Query
+//	@Produce		json
+//	@Param			ndc	path		string	true	"NDC code (e.g. 0002-1433, 0002-1433-61, 00021433)"
+//	@Success		200	{object}	store.ProductResult
+//	@Failure		400	{object}	map[string]string
+//	@Failure		401	{object}	map[string]string
+//	@Failure		404	{object}	map[string]string
+//	@Security		ApiKeyAuth
+//	@Router			/api/ndc/{ndc} [get]
 func (h *QueryHandler) LookupNDC(w http.ResponseWriter, r *http.Request) {
 	ndcInput := chi.URLParam(r, "ndc")
 
@@ -82,6 +94,19 @@ func (h *QueryHandler) LookupNDC(w http.ResponseWriter, r *http.Request) {
 }
 
 // SearchNDC handles GET /api/ndc/search.
+//
+//	@Summary		Search drugs by name
+//	@Description	Full-text search across brand names, generic names, and manufacturers. Supports prefix matching.
+//	@Tags			Query
+//	@Produce		json
+//	@Param			q		query		string	true	"Search query (e.g. metformin)"
+//	@Param			limit	query		int		false	"Results per page"	default(50)
+//	@Param			offset	query		int		false	"Pagination offset"	default(0)
+//	@Success		200		{object}	map[string]interface{}
+//	@Failure		400		{object}	map[string]string
+//	@Failure		401		{object}	map[string]string
+//	@Security		ApiKeyAuth
+//	@Router			/api/ndc/search [get]
 func (h *QueryHandler) SearchNDC(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query().Get("q")
 	if query == "" {
@@ -134,6 +159,17 @@ func (h *QueryHandler) SearchNDC(w http.ResponseWriter, r *http.Request) {
 }
 
 // ListPackages handles GET /api/ndc/{ndc}/packages.
+//
+//	@Summary		List packages for a product NDC
+//	@Description	Returns all package configurations for a given product NDC.
+//	@Tags			Query
+//	@Produce		json
+//	@Param			ndc	path		string	true	"Product NDC (e.g. 0002-1433)"
+//	@Success		200	{object}	map[string]interface{}
+//	@Failure		400	{object}	map[string]string
+//	@Failure		401	{object}	map[string]string
+//	@Security		ApiKeyAuth
+//	@Router			/api/ndc/{ndc}/packages [get]
 func (h *QueryHandler) ListPackages(w http.ResponseWriter, r *http.Request) {
 	ndcInput := chi.URLParam(r, "ndc")
 
@@ -171,6 +207,16 @@ func (h *QueryHandler) ListPackages(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetStats handles GET /api/ndc/stats.
+//
+//	@Summary		Dataset statistics
+//	@Description	Returns row counts, last load time, and data freshness.
+//	@Tags			Query
+//	@Produce		json
+//	@Success		200	{object}	store.StatsResult
+//	@Failure		401	{object}	map[string]string
+//	@Failure		500	{object}	map[string]string
+//	@Security		ApiKeyAuth
+//	@Router			/api/ndc/stats [get]
 func (h *QueryHandler) GetStats(w http.ResponseWriter, r *http.Request) {
 	stats, err := h.queryStore.GetStats(r.Context())
 	if err != nil {

@@ -23,6 +23,20 @@ func NewOpenFDAHandler(logger *slog.Logger, queryStore QueryProvider) *OpenFDAHa
 }
 
 // HandleNDCJSON handles GET /api/openfda/ndc.json — mirrors the openFDA /drug/ndc.json endpoint.
+//
+//	@Summary		openFDA-compatible NDC search
+//	@Description	Drop-in replacement for the openFDA /drug/ndc.json endpoint. Returns identical response format. Supports openFDA search syntax (field:value, exact phrases, AND via +).
+//	@Tags			OpenFDA
+//	@Produce		json
+//	@Param			search	query		string	true	"openFDA search query (e.g. brand_name:metformin, product_ndc:\"0002-1433\")"
+//	@Param			limit	query		int		false	"Results per page (default 1, max 1000)"	default(1)
+//	@Param			skip	query		int		false	"Pagination offset"							default(0)
+//	@Success		200		{object}	OpenFDAResponse
+//	@Failure		400		{object}	OpenFDAError
+//	@Failure		401		{object}	map[string]string
+//	@Failure		404		{object}	OpenFDAError
+//	@Security		ApiKeyAuth
+//	@Router			/api/openfda/ndc.json [get]
 func (h *OpenFDAHandler) HandleNDCJSON(w http.ResponseWriter, r *http.Request) {
 	search := r.URL.Query().Get("search")
 	if search == "" {

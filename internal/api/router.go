@@ -7,6 +7,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	httpSwagger "github.com/swaggo/http-swagger/v2"
 
 	"github.com/calebdunn/ndc-loader/internal/loader"
 )
@@ -39,6 +40,9 @@ func NewRouter(
 
 	// Prometheus metrics endpoint (no auth required).
 	r.Handle("/metrics", promhttp.Handler())
+
+	// Swagger UI (no auth required).
+	r.Get("/swagger/*", httpSwagger.WrapHandler)
 
 	// All other routes require API key.
 	r.Group(func(r chi.Router) {

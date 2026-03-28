@@ -1,3 +1,14 @@
+//	@title						ndc-loader API
+//	@version					1.0
+//	@description				FDA NDC Directory bulk loader and REST API. Ingests NDC Directory and Drugs@FDA datasets daily, serves via REST with full-text search and NDC format normalization.
+//	@host						localhost:8081
+//	@BasePath					/
+//	@securityDefinitions.apikey	ApiKeyAuth
+//	@in							header
+//	@name						X-API-Key
+
+//go:generate swag init -g cmd/ndc-loader/main.go --v3.1 -o docs/swagger -d ../..
+
 package main
 
 import (
@@ -13,6 +24,8 @@ import (
 	"github.com/calebdunn/ndc-loader/internal/api"
 	"github.com/calebdunn/ndc-loader/internal/loader"
 	"github.com/calebdunn/ndc-loader/internal/store"
+
+	_ "github.com/calebdunn/ndc-loader/docs/swagger" // swagger docs
 )
 
 func main() {

@@ -53,6 +53,18 @@ type TriggerLoadResponse struct {
 }
 
 // TriggerLoad handles POST /api/admin/load.
+//
+//	@Summary		Trigger a data load
+//	@Description	Start a manual FDA data load. Returns 409 if a load is already in progress.
+//	@Tags			Admin
+//	@Accept			json
+//	@Produce		json
+//	@Param			body	body		TriggerLoadRequest	false	"Load options"
+//	@Success		202		{object}	TriggerLoadResponse
+//	@Failure		401		{object}	map[string]string
+//	@Failure		409		{object}	map[string]string
+//	@Security		ApiKeyAuth
+//	@Router			/api/admin/load [post]
 func (h *AdminHandler) TriggerLoad(w http.ResponseWriter, r *http.Request) {
 	var req TriggerLoadRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -118,6 +130,17 @@ type CheckpointStatus struct {
 }
 
 // GetLoadStatus handles GET /api/admin/load/{loadID}.
+//
+//	@Summary		Check load status
+//	@Description	Returns checkpoint progress for a specific load operation.
+//	@Tags			Admin
+//	@Produce		json
+//	@Param			loadID	path		string	true	"Load ID (UUID)"
+//	@Success		200		{object}	LoadStatusResponse
+//	@Failure		401		{object}	map[string]string
+//	@Failure		404		{object}	map[string]string
+//	@Security		ApiKeyAuth
+//	@Router			/api/admin/load/{loadID} [get]
 func (h *AdminHandler) GetLoadStatus(w http.ResponseWriter, r *http.Request) {
 	loadID := chi.URLParam(r, "loadID")
 
@@ -186,6 +209,13 @@ func (h *AdminHandler) GetLoadStatus(w http.ResponseWriter, r *http.Request) {
 }
 
 // healthHandler returns the health check handler with data freshness info.
+//
+//	@Summary		Health check
+//	@Description	Returns service health status and data freshness. Degrades to "degraded" when data is >48 hours old. No authentication required.
+//	@Tags			Operations
+//	@Produce		json
+//	@Success		200	{object}	map[string]interface{}
+//	@Router			/health [get]
 func healthHandler(checkpointStore LastLoadInfoProvider) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		resp := map[string]interface{}{
