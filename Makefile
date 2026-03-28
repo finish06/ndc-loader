@@ -2,7 +2,7 @@
 
 STAGING_HOST ?= 192.168.1.145
 STAGING_USER ?= $(USER)
-STAGING_DIR  ?= ~/ndc-loader
+STAGING_DIR  ?= /opt/rx-dag
 REGISTRY     ?= dockerhub.calebdunn.tech/finish06/ndc-loader
 
 .PHONY: build test lint docs deploy-staging staging-logs staging-status staging-restart
