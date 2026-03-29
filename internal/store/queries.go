@@ -19,21 +19,22 @@ func NewQueryStore(db *pgxpool.Pool) *QueryStore {
 
 // ProductResult is the API response for a single product lookup.
 type ProductResult struct {
-	ProductNDC        string          `json:"product_ndc"`
-	BrandName         *string         `json:"brand_name"`
-	GenericName       *string         `json:"generic_name"`
-	DosageForm        *string         `json:"dosage_form"`
-	Route             *string         `json:"route"`
-	Manufacturer      *string         `json:"manufacturer"`
-	ActiveIngredient  *string         `json:"active_ingredients"`
-	Strength          *string         `json:"strength"`
-	StrengthUnit      *string         `json:"strength_unit"`
-	PharmClasses      *string         `json:"pharm_classes"`
-	DEASchedule       *string         `json:"dea_schedule"`
-	MarketingCategory *string         `json:"marketing_category"`
-	ApplicationNumber *string         `json:"application_number"`
-	Packages          []PackageResult `json:"packages"`
-	MatchedPackage    *string         `json:"matched_package"`
+	ProductNDC             string          `json:"product_ndc"`
+	BrandName              *string         `json:"brand_name"`
+	GenericName            *string         `json:"generic_name"`
+	DosageForm             *string         `json:"dosage_form"`
+	Route                  *string         `json:"route"`
+	Manufacturer           *string         `json:"manufacturer"`
+	ActiveIngredient       *string         `json:"active_ingredients"`
+	Strength               *string         `json:"strength"`
+	StrengthUnit           *string         `json:"strength_unit"`
+	PharmClasses           *string         `json:"pharm_classes"`
+	PharmClassesStructured interface{}     `json:"pharm_classes_structured,omitempty"`
+	DEASchedule            *string         `json:"dea_schedule"`
+	MarketingCategory      *string         `json:"marketing_category"`
+	ApplicationNumber      *string         `json:"application_number"`
+	Packages               []PackageResult `json:"packages"`
+	MatchedPackage         *string         `json:"matched_package"`
 }
 
 // PackageResult is a single package in the API response.

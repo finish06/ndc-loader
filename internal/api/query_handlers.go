@@ -89,8 +89,20 @@ func (h *QueryHandler) LookupNDC(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	enrichProduct(product)
+
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(product)
+}
+
+// enrichProduct adds structured pharm_classes to a ProductResult.
+func enrichProduct(p *store.ProductResult) {
+	if p == nil {
+		return
+	}
+	if p.PharmClasses != nil && *p.PharmClasses != "" {
+		p.PharmClassesStructured = ParsePharmClasses(*p.PharmClasses)
+	}
 }
 
 // SearchNDC handles GET /api/ndc/search.
