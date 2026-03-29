@@ -3,7 +3,7 @@
   "version": "0.5.0",
   "project": {
     "name": "ndc-loader",
-    "description": "FDA NDC Directory bulk loader and REST API service — replaces openFDA dependency for drug-cash and internal microservices",
+    "description": "FDA NDC Directory bulk loader and REST API service \u2014 replaces openFDA dependency for drug-cash and internal microservices",
     "created": "2026-03-25",
     "author": "calebdunn"
   },
@@ -43,7 +43,10 @@
     "git_host": "github",
     "git_remote": null,
     "cloud_provider": "self-hosted",
-    "cloud_services": ["Docker", "homelab"],
+    "cloud_services": [
+      "Docker",
+      "homelab"
+    ],
     "cicd": {
       "platform": "github-actions",
       "scaffolded_by_add": false,
@@ -62,16 +65,24 @@
     "dev": {
       "deploy_trigger": "push to dev branch",
       "url": null,
-      "verify": ["unit_tests", "integration_tests"]
+      "verify": [
+        "unit_tests",
+        "integration_tests"
+      ]
     },
     "staging": {
       "deploy_trigger": "push to staging branch",
       "url": null,
-      "verify": ["e2e_tests", "performance_tests"]
+      "verify": [
+        "e2e_tests",
+        "performance_tests"
+      ]
     },
     "production": {
       "deploy_trigger": "merge to main",
-      "verify": ["smoke_tests"],
+      "verify": [
+        "smoke_tests"
+      ],
       "url": null,
       "requires_approval": true
     }
@@ -108,7 +119,9 @@
     "default_branch": "main",
     "commit_convention": "conventional",
     "pr_template": true,
-    "protected_branches": ["main"]
+    "protected_branches": [
+      "main"
+    ]
   },
   "branding": {
     "accentColor": "#6366f1",
@@ -139,7 +152,7 @@
     "lastDetected": null
   },
   "changelog": {
-    "lastProcessedCommit": null,
+    "lastProcessedCommit": "f8560be1a15cce2bef48b974d6cf6f56e783a056",
     "lastVersionTag": null
   },
   "planning": {
