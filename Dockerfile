@@ -1,12 +1,22 @@
 FROM golang:1.26-alpine AS builder
 
+ARG VERSION=dev
+ARG GIT_COMMIT=unknown
+ARG GIT_BRANCH=unknown
+
 WORKDIR /build
 
 COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . .
-RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /ndc-loader ./cmd/ndc-loader
+RUN CGO_ENABLED=0 GOOS=linux go build \
+    -ldflags="-s -w \
+    -X main.version=${VERSION} \
+    -X main.gitCommit=${GIT_COMMIT} \
+    -X main.gitBranch=${GIT_BRANCH} \
+    -X main.buildTime=$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+    -o /ndc-loader ./cmd/ndc-loader
 
 FROM alpine:3.19
 

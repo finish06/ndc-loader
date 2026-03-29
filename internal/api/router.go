@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	httpSwagger "github.com/swaggo/http-swagger/v2"
 
@@ -26,6 +27,7 @@ func NewRouter(
 	orchestrator *loader.Orchestrator,
 	checkpointStore CheckpointStoreProvider,
 	queryStore QueryProvider,
+	db *pgxpool.Pool,
 ) http.Handler {
 	r := chi.NewRouter()
 
@@ -35,13 +37,10 @@ func NewRouter(
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.Compress(5))
 
-	// Health endpoint (no auth required).
-	r.Get("/health", healthHandler(checkpointStore))
-
-	// Prometheus metrics endpoint (no auth required).
+	// Operations endpoints (no auth required).
+	r.Get("/health", newHealthHandler(db, checkpointStore))
+	r.Get("/version", versionHandler())
 	r.Handle("/metrics", promhttp.Handler())
-
-	// Swagger UI (no auth required).
 	r.Get("/swagger/*", httpSwagger.WrapHandler)
 
 	// All other routes require API key.

@@ -107,6 +107,10 @@ jobs:
           context: .
           push: true
           platforms: linux/amd64
+          build-args: |
+            VERSION=${{ steps.version.outputs.tag }}
+            GIT_COMMIT=${{ github.sha }}
+            GIT_BRANCH=${{ github.ref_name }}
           tags: |
             dockerhub.calebdunn.tech/finish06/rx-dag:beta
             ghcr.io/finish06/rx-dag:beta
@@ -140,6 +144,10 @@ jobs:
           context: .
           push: true
           platforms: linux/amd64
+          build-args: |
+            VERSION=v${{ steps.version.outputs.tag }}
+            GIT_COMMIT=${{ github.sha }}
+            GIT_BRANCH=${{ github.ref_name }}
           tags: |
             dockerhub.calebdunn.tech/finish06/rx-dag:${{ steps.version.outputs.tag }}
             dockerhub.calebdunn.tech/finish06/rx-dag:latest

@@ -37,7 +37,7 @@ func setupQueryRouter(t *testing.T) http.Handler {
 	checkpointStore := store.NewCheckpointStore(db)
 	queryStore := store.NewQueryStore(db)
 
-	return api.NewRouter(logger, []string{"test-key"}, nil, checkpointStore, queryStore)
+	return api.NewRouter(logger, []string{"test-key"}, nil, checkpointStore, queryStore, db)
 }
 
 func TestQueryAPI_LookupByProductNDC(t *testing.T) {

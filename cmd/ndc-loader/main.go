@@ -7,7 +7,7 @@
 //	@in							header
 //	@name						X-API-Key
 
-//go:generate swag init -g cmd/ndc-loader/main.go --v3.1 -o docs/swagger -d ../..
+//go:generate swag init -g cmd/ndc-loader/main.go -o docs/swagger -d ../..
 
 package main
 
@@ -28,7 +28,18 @@ import (
 	_ "github.com/calebdunn/ndc-loader/docs/swagger" // swagger docs
 )
 
+// Build-time variables injected via ldflags.
+var (
+	version   = "dev"
+	gitCommit = "unknown"
+	gitBranch = "unknown"
+	buildTime = "unknown"
+)
+
 func main() {
+	// Set build info for /version and /health endpoints.
+	api.SetBuildInfo(version, gitCommit, gitBranch, buildTime)
+
 	cfg, err := internal.LoadConfig()
 	if err != nil {
 		slog.Error("failed to load config", "error", err)
@@ -37,6 +48,12 @@ func main() {
 
 	logger := internal.SetupLogger(cfg.LogLevel, cfg.LogFormat)
 	slog.SetDefault(logger)
+
+	logger.Info("starting ndc-loader",
+		"version", version,
+		"commit", gitCommit,
+		"branch", gitBranch,
+	)
 
 	datasetsCfg, err := loader.LoadDatasetsConfig(cfg.DatasetsFile)
 	if err != nil {
@@ -72,7 +89,7 @@ func main() {
 	)
 
 	queryStore := store.NewQueryStore(db)
-	router := api.NewRouter(logger, cfg.APIKeys, orchestrator, checkpointStore, queryStore)
+	router := api.NewRouter(logger, cfg.APIKeys, orchestrator, checkpointStore, queryStore, db)
 
 	scheduler, err := loader.NewScheduler(logger, cfg.LoadSchedule, orchestrator)
 	if err != nil {

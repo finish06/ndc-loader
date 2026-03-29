@@ -228,14 +228,15 @@ func TestGetLoadStatus_FailedStatus(t *testing.T) {
 	}
 }
 
-func TestHealthHandler_WithFreshData(t *testing.T) {
+func TestHealthHandler_NoDB_WithFreshData(t *testing.T) {
 	now := time.Now()
 	mock := &mockLastLoadInfoProvider{
 		lastLoad: &now,
 		ageHours: 12.0,
 	}
 
-	handler := healthHandler(mock)
+	// nil db → postgres disconnected → status "error" regardless of data freshness.
+	handler := newHealthHandler(nil, mock)
 	req := httptest.NewRequest(http.MethodGet, "/health", nil)
 	rec := httptest.NewRecorder()
 	handler.ServeHTTP(rec, req)
@@ -244,55 +245,67 @@ func TestHealthHandler_WithFreshData(t *testing.T) {
 		t.Errorf("expected 200, got %d", rec.Code)
 	}
 
-	var body map[string]interface{}
-	json.Unmarshal(rec.Body.Bytes(), &body)
+	var body HealthResponse
+	_ = json.Unmarshal(rec.Body.Bytes(), &body)
 
-	if body["status"] != "ok" {
-		t.Errorf("expected status ok, got %v", body["status"])
+	if body.Status != "error" {
+		t.Errorf("expected status error (no db), got %v", body.Status)
 	}
-	if body["last_load"] == nil {
+	if body.LastLoad == nil {
 		t.Error("expected last_load to be set")
 	}
-	if body["data_age_hours"] == nil {
+	if body.DataAgeHours == nil {
 		t.Error("expected data_age_hours to be set")
+	}
+	if body.Uptime == "" {
+		t.Error("expected non-empty uptime")
+	}
+	if body.Version == "" {
+		t.Error("expected non-empty version")
 	}
 }
 
-func TestHealthHandler_WithStaleData(t *testing.T) {
+func TestHealthHandler_NoDB_WithStaleData(t *testing.T) {
 	old := time.Now().Add(-72 * time.Hour)
 	mock := &mockLastLoadInfoProvider{
 		lastLoad: &old,
 		ageHours: 72.0,
 	}
 
-	handler := healthHandler(mock)
+	handler := newHealthHandler(nil, mock)
 	req := httptest.NewRequest(http.MethodGet, "/health", nil)
 	rec := httptest.NewRecorder()
 	handler.ServeHTTP(rec, req)
 
-	var body map[string]interface{}
-	json.Unmarshal(rec.Body.Bytes(), &body)
+	var body HealthResponse
+	_ = json.Unmarshal(rec.Body.Bytes(), &body)
 
-	if body["status"] != "degraded" {
-		t.Errorf("expected status degraded for stale data, got %v", body["status"])
+	// error > degraded — postgres disconnected trumps stale data.
+	if body.Status != "error" {
+		t.Errorf("expected status error (no db trumps stale data), got %v", body.Status)
 	}
 }
 
-func TestHealthHandler_WithError(t *testing.T) {
+func TestHealthHandler_NoDB_WithLoadError(t *testing.T) {
 	mock := &mockLastLoadInfoProvider{
 		err: fmt.Errorf("db error"),
 	}
 
-	handler := healthHandler(mock)
+	handler := newHealthHandler(nil, mock)
 	req := httptest.NewRequest(http.MethodGet, "/health", nil)
 	rec := httptest.NewRecorder()
 	handler.ServeHTTP(rec, req)
 
-	var body map[string]interface{}
-	json.Unmarshal(rec.Body.Bytes(), &body)
+	var body HealthResponse
+	_ = json.Unmarshal(rec.Body.Bytes(), &body)
 
-	// Should still return ok since health check should be resilient.
-	if body["status"] != "ok" {
-		t.Errorf("expected status ok even with error, got %v", body["status"])
+	if body.Status != "error" {
+		t.Errorf("expected status error with nil db, got %v", body.Status)
+	}
+	if len(body.Dependencies) != 1 {
+		t.Fatalf("expected 1 dependency, got %d", len(body.Dependencies))
+	}
+	if body.Dependencies[0].Status != "disconnected" {
+		t.Errorf("expected postgres disconnected, got %s", body.Dependencies[0].Status)
 	}
 }

@@ -8,8 +8,8 @@ import (
 	"testing"
 )
 
-func TestHealthHandler(t *testing.T) {
-	handler := healthHandler(nil)
+func TestHealthHandler_NoDB(t *testing.T) {
+	handler := newHealthHandler(nil, nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/health", nil)
 	rec := httptest.NewRecorder()
@@ -20,21 +20,62 @@ func TestHealthHandler(t *testing.T) {
 		t.Errorf("expected 200, got %d", rec.Code)
 	}
 
-	var body map[string]interface{}
+	var body HealthResponse
 	if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
 		t.Fatalf("failed to parse body: %v", err)
 	}
 
-	if body["status"] != "ok" {
-		t.Errorf("expected status 'ok', got %v", body["status"])
+	// No DB = error status.
+	if body.Status != "error" {
+		t.Errorf("expected status 'error' with nil db, got %v", body.Status)
 	}
-	if body["db"] != "connected" {
-		t.Errorf("expected db 'connected', got %v", body["db"])
+	if body.Version == "" {
+		t.Error("expected non-empty version")
+	}
+	if body.Uptime == "" {
+		t.Error("expected non-empty uptime")
+	}
+	if len(body.Dependencies) != 1 {
+		t.Fatalf("expected 1 dependency, got %d", len(body.Dependencies))
+	}
+	if body.Dependencies[0].Name != "postgres" {
+		t.Errorf("expected postgres dependency, got %s", body.Dependencies[0].Name)
+	}
+	if body.Dependencies[0].Status != "disconnected" {
+		t.Errorf("expected disconnected, got %s", body.Dependencies[0].Status)
+	}
+}
+
+func TestVersionHandler(t *testing.T) {
+	handler := versionHandler()
+
+	req := httptest.NewRequest(http.MethodGet, "/version", nil)
+	rec := httptest.NewRecorder()
+
+	handler.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected 200, got %d", rec.Code)
+	}
+
+	var body map[string]string
+	if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
+		t.Fatalf("failed to parse body: %v", err)
+	}
+
+	if body["go_version"] == "" {
+		t.Error("expected non-empty go_version")
+	}
+	if body["os"] == "" {
+		t.Error("expected non-empty os")
+	}
+	if body["arch"] == "" {
+		t.Error("expected non-empty arch")
 	}
 }
 
 func TestNewRouter_HealthNoAuth(t *testing.T) {
-	router := NewRouter(nil, []string{"secret-key"}, nil, nil, nil)
+	router := NewRouter(nil, []string{"secret-key"}, nil, nil, nil, nil)
 
 	// Health endpoint should work without API key.
 	req := httptest.NewRequest(http.MethodGet, "/health", nil)
@@ -47,7 +88,7 @@ func TestNewRouter_HealthNoAuth(t *testing.T) {
 }
 
 func TestNewRouter_AdminRequiresAuth(t *testing.T) {
-	router := NewRouter(nil, []string{"secret-key"}, nil, nil, nil)
+	router := NewRouter(nil, []string{"secret-key"}, nil, nil, nil, nil)
 
 	// Admin endpoint should require API key.
 	req := httptest.NewRequest(http.MethodPost, "/api/admin/load", bytes.NewReader([]byte("{}")))
@@ -64,7 +105,7 @@ func TestNewRouter_AdminWithAuth(t *testing.T) {
 		mockCheckpointQuerier:    newMockCheckpointQuerier(),
 		mockLastLoadInfoProvider: &mockLastLoadInfoProvider{},
 	}
-	router := NewRouter(nil, []string{"secret-key"}, nil, mockCS, nil)
+	router := NewRouter(nil, []string{"secret-key"}, nil, mockCS, nil, nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/admin/load/test-load-id", nil)
 	req.Header.Set("X-API-Key", "secret-key")
