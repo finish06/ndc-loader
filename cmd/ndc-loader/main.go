@@ -1,7 +1,7 @@
 //	@title						ndc-loader API
 //	@version					1.0
 //	@description				FDA NDC Directory bulk loader and REST API. Ingests NDC Directory and Drugs@FDA datasets daily, serves via REST with full-text search and NDC format normalization.
-//	@host						localhost:8081
+//	@host
 //	@BasePath					/
 //	@securityDefinitions.apikey	ApiKeyAuth
 //	@in							header
