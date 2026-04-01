@@ -828,8 +828,6 @@ var SwaggerInfo = &swag.Spec{
 	Description:      "FDA NDC Directory bulk loader and REST API. Ingests NDC Directory and Drugs@FDA datasets daily, serves via REST with full-text search and NDC format normalization.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
-	LeftDelim:        "{{",
-	RightDelim:       "}}",
 }
 
 func init() {
