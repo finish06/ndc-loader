@@ -1,9 +1,10 @@
 # ndc-loader — Product Requirements Document
 
-**Version:** 0.1.0
+**Version:** 0.2.0
 **Created:** 2026-03-25
+**Updated:** 2026-04-01
 **Author:** calebdunn
-**Status:** Draft
+**Status:** Active
 
 ## 1. Problem Statement
 
@@ -29,16 +30,20 @@ The FDA publishes the complete NDC Directory as a daily bulk download (~140K pro
 
 ## 4. Scope
 
-### In Scope (MVP)
+### In Scope (MVP) — All Delivered
 
-- Download and ingest the FDA NDC Directory (`ndctext.zip`) daily
-- PostgreSQL storage with product and package tables
+- Download and ingest the FDA NDC Directory (`ndctext.zip`) and Drugs@FDA datasets daily
+- PostgreSQL storage with 7 tables (products, packages, applications, drugsfda_products, submissions, marketing_status, te_codes)
 - REST API for NDC lookup, search, and package enumeration
 - Full-text search across brand names, generic names, and manufacturer
-- Health check endpoint with data freshness info
+- openFDA-compatible endpoint (`/api/openfda/ndc.json`) — drop-in replacement for drug-cash
+- API key authentication via `X-API-Key` header
+- Health check endpoint with postgres dependency check, uptime, and data freshness
+- Version endpoint with build metadata
 - Prometheus metrics endpoint
-- Docker Compose deployment
-- drug-cash integration as an upstream data source
+- Swagger UI with auto-generated OpenAPI spec at `/swagger/`
+- Docker Compose deployment (local + staging)
+- GitHub Actions CI/CD with staging webhook deploy
 
 ### Out of Scope
 
@@ -46,8 +51,7 @@ The FDA publishes the complete NDC Directory as a daily bulk download (~140K pro
 - Drug interaction data (separate data source, separate service)
 - Historical NDC tracking (point-in-time snapshots)
 - Write API (data comes exclusively from FDA bulk download)
-- Authentication / API keys (internal network only, same as drug-cash)
-- UI / dashboard
+- UI / dashboard (beyond Swagger UI for API docs)
 
 ## 5. Architecture
 
@@ -55,7 +59,7 @@ The FDA publishes the complete NDC Directory as a daily bulk download (~140K pro
 
 | Layer | Technology | Version | Notes |
 |-------|-----------|---------|-------|
-| Language | Go | 1.22+ | Consistency with drug-cash, drug-gate |
+| Language | Go | 1.26+ | Consistency with drug-cash, drug-gate |
 | HTTP Framework | Chi | v5 | Lightweight router with middleware support |
 | Database | PostgreSQL | 16+ | Full-text search via GIN indexes |
 | DB Driver | pgx | v5 | Native Go PostgreSQL driver |
@@ -77,8 +81,8 @@ The FDA publishes the complete NDC Directory as a daily bulk download (~140K pro
 | Environment | Purpose | URL | Deploy Trigger |
 |-------------|---------|-----|----------------|
 | Local | Development & unit tests | http://localhost:8081 | Manual (docker-compose up) |
-| Staging | Pre-production validation | TBD | Push to staging branch |
-| Production | Live service | TBD | Merge to main |
+| Staging | Pre-production validation | http://192.168.1.145:8081 | Push to main (auto via webhook) |
+| Production | Live service | TBD | Tag `v*` (manual) |
 
 **Environment Tier:** 3 (local + staging + production)
 
@@ -94,66 +98,61 @@ See `ndc-loader-prd.md` sections 5-6 for full schema and API contract definition
 
 | Milestone | Goal | Target Maturity | Status | Success Criteria |
 |-----------|------|-----------------|--------|------------------|
-| M1: Schema + Loader | Download ZIP, parse, load into PostgreSQL, daily cron | alpha | NOW | Data loaded, row counts match FDA source |
-| M2: Query API | NDC lookup, search, package enumeration endpoints | alpha | NEXT | All endpoints return correct data, <5ms lookup |
-| M3: Ops | Health check, Prometheus metrics, Docker Compose, structured logging | alpha | NEXT | Health endpoint live, metrics scraped |
-| M4: drug-cash Integration | Add ndc-loader as upstream in drug-cash config | alpha | LATER | Cross-slug search includes NDC data |
+| M1: Schema + Loader | Download, parse, load FDA data; query API with search | alpha | COMPLETE | 112K products, 212K packages, 29K applications loaded; all query endpoints verified |
+| M2: drug-cash Integration | openFDA-compatible API as drop-in replacement | alpha | COMPLETE | 14/14 AC, format parity verified against live openFDA |
+| M3: Swagger Docs | Auto-generated OpenAPI spec with Swagger UI | alpha | COMPLETE | Swagger UI at /swagger/, all endpoints documented |
+| M4: Production Readiness | Release tagging, production deploy, monitoring | beta | NEXT | Tagged release, production deployment, SLA monitoring |
 
 ### Milestone Detail
 
-#### M1: Schema + Loader [NOW]
-**Goal:** Download and ingest the FDA NDC Directory into PostgreSQL
-**Appetite:** 2-3 days
-**Target maturity:** alpha
+#### M1: Schema + Loader [COMPLETE]
+**Goal:** Download and ingest the FDA NDC Directory and Drugs@FDA datasets into PostgreSQL with checkpoint-based retry and API key authentication
+**Completed:** 2026-03-26
 **Features:**
-- fda-download — Download and unzip ndctext.zip from FDA
-- db-schema — PostgreSQL schema with products and packages tables
-- data-loader — Parse tab-delimited files and bulk load into database
-- scheduler — Daily cron-triggered data refresh
-**Success criteria:**
-- [ ] FDA ZIP downloaded and parsed successfully
-- [ ] Products and packages tables populated
-- [ ] Row counts match FDA source files
-- [ ] Atomic swap — consumers never see partial data
-- [ ] Error handling: abort if row count drops >20%
+- fda-data-fetcher — Download, extract, parse, bulk load with atomic swap, checkpoint retry
+- query-api — NDC lookup, full-text search, package enumeration, stats endpoint
+**Results:**
+- [x] 112K products, 212K packages, 29K applications loaded
+- [x] Atomic swap — consumers never see partial data
+- [x] Row count safety valve (abort if >20% drop)
+- [x] NDC format normalization (4-4-2, 5-3-2, 5-4-1 patterns)
+- [x] Full-text search with prefix matching and relevance ranking
 
-#### M2: Query API [NEXT]
-**Goal:** REST API for NDC lookup, search, and package enumeration
-**Appetite:** 2-3 days
-**Target maturity:** alpha
+#### M2: drug-cash Integration [COMPLETE]
+**Goal:** Make ndc-loader a drop-in upstream replacement for the openFDA NDC API in drug-cash
+**Completed:** 2026-03-27
 **Features:**
-- ndc-lookup — GET /api/ndc/{ndc} with format normalization
-- ndc-search — GET /api/ndc/search with full-text search
-- package-list — GET /api/ndc/{ndc}/packages
-- stats — GET /api/ndc/stats
-**Success criteria:**
-- [ ] Single NDC lookup < 5ms P95
-- [ ] Search < 50ms P95
-- [ ] NDC format normalization works (any format accepted)
+- openfda-compat-api — `/api/openfda/ndc.json` with openFDA search syntax and response format
+**Results:**
+- [x] 14/14 acceptance criteria met
+- [x] Format parity verified against live openFDA API
+- [x] Supports: field search, exact phrases, AND queries, pagination
 
-#### M3: Ops [NEXT]
-**Goal:** Production-readiness: health, metrics, logging, containerization
-**Appetite:** 1-2 days
-**Target maturity:** alpha
+#### M3: Swagger Docs [COMPLETE]
+**Goal:** Auto-generated OpenAPI 3.0 docs served via Swagger UI
+**Completed:** 2026-04-01
 **Features:**
-- health-check — GET /health with data freshness
-- prometheus — GET /metrics with all defined metrics
-- structured-logging — JSON logging with configurable level
-- docker-compose — Multi-service compose file
-**Success criteria:**
-- [ ] Health endpoint reports data age
-- [ ] Prometheus metrics scraped
-- [ ] Structured JSON logs
+- swagger-docs — swaggo/swag annotations, Swagger UI at /swagger/, all endpoints documented
+**Results:**
+- [x] Swagger UI loads at /swagger/
+- [x] All endpoints documented with params, responses, examples
+- [x] API key auth scheme documented
+- [x] No authentication required for Swagger UI access
 
-#### M4: drug-cash Integration [LATER]
-**Goal:** Add ndc-loader as upstream data source in drug-cash
-**Appetite:** 1 day
-**Target maturity:** alpha
+#### M4: Production Readiness [NEXT]
+**Goal:** Stable release with production deployment and monitoring
+**Appetite:** 1 week
+**Target maturity:** beta
 **Features:**
-- drug-cash-config — YAML upstream configuration for ndc-loader
+- Release tagging with semantic versioning
+- Production deployment workflow
+- SLA monitoring and alerting
+- Performance baselines
 **Success criteria:**
-- [ ] Cross-slug search includes NDC data
-- [ ] Old fda-ndc slug can be deprecated
+- [ ] Tagged v1.0.0 release
+- [ ] Production deploy via tagged release
+- [ ] Response time baselines established
+- [ ] Uptime monitoring configured
 
 ### Maturity Promotion Path
 
@@ -165,16 +164,19 @@ See `ndc-loader-prd.md` sections 5-6 for full schema and API contract definition
 ## 7. Key Features
 
 ### Feature 1: FDA Data Ingestion
-Daily automated download of the FDA NDC Directory bulk ZIP, parsing of tab-delimited product.txt and package.txt files, and atomic bulk load into PostgreSQL.
+Daily automated download of the FDA NDC Directory and Drugs@FDA datasets, parsing of tab-delimited files with UTF-8 sanitization, and atomic bulk load into PostgreSQL with checkpoint-based retry and row count safety valve.
 
 ### Feature 2: NDC Lookup API
-REST endpoint for single NDC lookup with format normalization — accepts any common NDC format (hyphenated, unhyphenated, 2-segment, 3-segment) and returns full product details with packages.
+REST endpoint for single NDC lookup with format normalization — accepts any common NDC format (hyphenated, unhyphenated, 2-segment, 3-segment) and returns full product details with packages and structured pharmacological classification.
 
 ### Feature 3: Full-Text Search
 PostgreSQL ts_query-based search across brand names, generic names, and manufacturer. Supports prefix matching, relevance ranking, and pagination.
 
-### Feature 4: drug-cash Integration
-Upstream configuration allowing drug-cash to proxy ndc-loader for NDC search and lookup, integrating into existing cross-slug search.
+### Feature 4: openFDA-Compatible API
+Drop-in replacement for the openFDA `/drug/ndc.json` endpoint with identical response format. Supports openFDA search syntax (field:value, exact phrases, AND via `+`). Enables drug-cash to swap upstream without code changes.
+
+### Feature 5: Interactive API Documentation
+Auto-generated OpenAPI spec via swaggo/swag annotations, served through Swagger UI at `/swagger/`. All endpoints documented with parameters, response schemas, and authentication requirements.
 
 ## 8. Non-Functional Requirements
 
@@ -182,16 +184,17 @@ Upstream configuration allowing drug-cash to proxy ndc-loader for NDC search and
 - **Reliability:** Failed loads keep existing data. Never serve empty/partial dataset. Abort if row count drops >20%.
 - **Observability:** Structured JSON logging. Prometheus metrics. Data freshness in health check.
 - **Storage:** PostgreSQL with ~500MB disk for full dataset + indexes.
-- **Security:** Internal network only. No auth required in v1. No PII in NDC data.
+- **Security:** Internal network only. API key authentication via `X-API-Key` header. No PII in NDC data.
 
 ## 9. Open Questions
 
 - Should the loader expose a bulk export endpoint (`GET /api/ndc/export?format=csv`) for downstream analytics?
 - Include excluded NDCs (`NDC_EXCLUDE_FLAG=Y`)? ~13K products — bulk ingredients, compounding components. Exclude by default, include via query param?
-- NDC format normalization depth — FDA uses multiple formats (4-4-2, 5-3-2, 5-4-1). Store canonical + accept any?
+- ~~NDC format normalization depth — FDA uses multiple formats (4-4-2, 5-3-2, 5-4-1). Store canonical + accept any?~~ **Resolved:** All formats accepted and normalized. Tries 4-4-2, 5-3-2, 5-4-1 patterns for unhyphenated input.
 
 ## 10. Revision History
 
 | Date | Version | Author | Changes |
 |------|---------|--------|---------|
 | 2026-03-25 | 0.1.0 | calebdunn | Initial draft from /add:init interview |
+| 2026-04-01 | 0.2.0 | calebdunn | Updated to reflect M1-M3 completion, actual architecture, resolved questions |

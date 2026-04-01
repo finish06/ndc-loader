@@ -156,7 +156,7 @@
     "lastVersionTag": null
   },
   "planning": {
-    "current_milestone": "M3-swagger-docs",
+    "current_milestone": "M4-production-readiness",
     "current_cycle": null,
     "wip_limit": 3,
     "parallel_agents": 2,

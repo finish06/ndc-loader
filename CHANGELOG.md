@@ -32,6 +32,7 @@ and this project adheres to [Conventional Commits](https://www.conventionalcommi
 - Makefile with build, test, lint, deploy, and staging operations targets
 
 ### Fixed
+- Swagger UI "failed to load API definitions" — swag v2 import registered spec in wrong module registry; switched to swag v1 to match http-swagger
 - CI publish job needs `contents:read` permission for private repo checkout
 - Generated swagger docs must be committed (main.go blank import references the package)
 - `.gitignore` pattern `ndc-loader` excluded `cmd/ndc-loader/` directory — changed to `/ndc-loader`
