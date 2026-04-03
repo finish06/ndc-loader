@@ -32,6 +32,7 @@ As a **potential API consumer or developer**, I want to visit the rx-dag landing
 | AC-013 | The root redirect route requires no authentication (no API key) | Must |
 | AC-014 | Curl example code blocks have a visual copy affordance (copy button or select-all styling) | Should |
 | AC-015 | Landing page footer includes "Powered by ndc-loader" with link to repo | Nice |
+| AC-016 | GitHub Actions workflow deploys `docs/landing/` to GitHub Pages automatically on push to main | Must |
 
 ## 3. User Test Cases
 
