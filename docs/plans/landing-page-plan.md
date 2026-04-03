@@ -74,12 +74,12 @@ The Go changes are small and testable. Do these first via TDD.
 
 | Task ID | Description | Effort | AC | Dependencies |
 |---------|-------------|--------|-----|--------------|
-| TASK-001 | Create `docs/landing/index.html` with full page structure | 2h | AC-001 through AC-010, AC-014, AC-015 | — |
+| TASK-001 | Create `landing/index.html` with full page structure | 2h | AC-001 through AC-010, AC-014, AC-015 | — |
 | TASK-002 | Add hero, features, API showcase, quick start, footer sections | (bundled) | AC-002 through AC-006 | TASK-001 |
 | TASK-003 | Style with pharmacy green theme, responsive breakpoints, copy buttons | (bundled) | AC-007, AC-008, AC-010, AC-014 | TASK-001 |
 
 **File created:**
-- `docs/landing/index.html` — single self-contained file
+- `landing/index.html` — single self-contained file
 
 **Content plan:**
 
@@ -177,7 +177,7 @@ Internal:
 - All use `httptest.NewRecorder` — no database or server needed
 
 ### Visual Verification (Phase 2)
-- Open `docs/landing/index.html` directly in browser
+- Open `landing/index.html` directly in browser
 - Check mobile viewport (375px), tablet (768px), desktop (1200px+)
 - Verify all links point to correct targets
 
@@ -197,7 +197,7 @@ Internal:
 - `cmd/ndc-loader/main.go` — pass LandingURL to router
 
 ### Static Assets
-- `docs/landing/index.html` — complete landing page
+- `landing/index.html` — complete landing page
 
 ### Documentation
 - Swagger annotation on GET `/` endpoint
@@ -206,4 +206,4 @@ Internal:
 
 1. Review and approve this plan
 2. Run `/add:tdd-cycle specs/landing-page.md` to execute
-3. Enable GitHub Pages on the repo pointing to `docs/landing/`
+3. Enable GitHub Pages on the repo pointing to `landing/`

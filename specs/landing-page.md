@@ -17,7 +17,7 @@ As a **potential API consumer or developer**, I want to visit the rx-dag landing
 
 | ID | Criterion | Priority |
 |----|-----------|----------|
-| AC-001 | A single self-contained `index.html` exists at `docs/landing/index.html` with all CSS/JS inlined | Must |
+| AC-001 | A single self-contained `index.html` exists at `landing/index.html` with all CSS/JS inlined | Must |
 | AC-002 | Landing page includes a hero section with rx-dag name, tagline, and brief description | Must |
 | AC-003 | Landing page includes a feature highlights section covering: FDA data ingestion, NDC lookup, full-text search, openFDA compatibility | Must |
 | AC-004 | Landing page includes an API endpoint showcase with example curl commands and sample JSON responses for key endpoints | Must |
@@ -25,14 +25,14 @@ As a **potential API consumer or developer**, I want to visit the rx-dag landing
 | AC-006 | Landing page includes links to: GitHub repository, Swagger UI, health endpoint | Must |
 | AC-007 | Landing page uses a pharmacy/medical green color scheme (#10b981, #0d9488) with dark backgrounds | Must |
 | AC-008 | Landing page is fully static — no live API calls, no external JS dependencies, no build step | Must |
-| AC-009 | Landing page is deployable via GitHub Pages from `docs/landing/` directory | Must |
+| AC-009 | Landing page is deployable via GitHub Pages from `landing/` directory | Must |
 | AC-010 | Landing page is responsive and renders correctly on mobile, tablet, and desktop viewports | Should |
 | AC-011 | When `LANDING_URL` env var is set, GET `/` returns HTTP 302 redirect to the configured URL | Must |
 | AC-012 | When `LANDING_URL` env var is not set or empty, GET `/` returns HTTP 302 redirect to `/swagger/` | Must |
 | AC-013 | The root redirect route requires no authentication (no API key) | Must |
 | AC-014 | Curl example code blocks have a visual copy affordance (copy button or select-all styling) | Should |
 | AC-015 | Landing page footer includes "Powered by ndc-loader" with link to repo | Nice |
-| AC-016 | GitHub Actions workflow deploys `docs/landing/` to GitHub Pages automatically on push to main | Must |
+| AC-016 | GitHub Actions workflow deploys `landing/` to GitHub Pages automatically on push to main | Must |
 
 ## 3. User Test Cases
 
@@ -165,7 +165,7 @@ Location: /swagger/
 
 ## 8. Dependencies
 
-- GitHub Pages enabled on the repository (deploy from `docs/landing/` directory)
+- GitHub Pages enabled on the repository (deploy from `landing/` directory)
 - Existing Swagger UI at `/swagger/` (already implemented, specs/swagger-docs.md — Done)
 - No new Go dependencies required for the redirect (uses standard `net/http`)
 

@@ -38,7 +38,7 @@ Follow `docs/plans/landing-page-plan.md`:
 6. Add swagger annotation
 
 **Phase 2 — Landing Page (Static HTML):**
-1. Create `docs/landing/index.html` — single self-contained file
+1. Create `landing/index.html` — single self-contained file
 2. Hero section: rx-dag branding, tagline, CTA buttons
 3. Feature highlights: 4 cards (ingestion, lookup, search, openFDA compat)
 4. API showcase: curl examples + sample JSON for key endpoints
@@ -71,7 +71,7 @@ Run `/add:spec` interview for release tagging feature:
 ### Per-Item Validation
 - **landing-page:**
   - [ ] Redirect handler unit tests pass (4 test cases: with URL, without URL, empty string, no auth)
-  - [ ] `docs/landing/index.html` exists and renders all 5 sections
+  - [ ] `landing/index.html` exists and renders all 5 sections
   - [ ] Pharmacy green theme applied
   - [ ] Responsive on mobile/tablet/desktop
   - [ ] Full `go test ./...` passes
