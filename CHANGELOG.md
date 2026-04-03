@@ -50,8 +50,10 @@ and this project adheres to [Conventional Commits](https://www.conventionalcommi
 - QueryProvider and CheckpointStoreProvider interfaces for testability
 
 ### Documentation
+- Retrospective: maturity promoted Alpha to Beta (9/10 evidence score)
 - Comprehensive README with Mermaid flow charts (system, pipeline, request flow, data model, checkpoints)
 - API reference (`docs/api/endpoints.md`) with examples for all endpoints
 - Deployment guide (`docs/deployment.md`) — local, staging, CI/CD, release process
 - Data model documentation (`docs/data-model.md`) — tables, joins, pharm classification
 - Feature specs for all implemented features
+- CHANGELOG populated from full commit history
