@@ -8,10 +8,10 @@
     "author": "calebdunn"
   },
   "maturity": {
-    "level": "alpha",
-    "promoted_from": null,
-    "promoted_date": null,
-    "next_promotion_criteria": "Feature specs for all user-facing features, test coverage above 50%, PR workflow with code review, at least 2 deployment environments, TDD evidence"
+    "level": "beta",
+    "promoted_from": "alpha",
+    "promoted_date": "2026-04-03",
+    "next_promotion_criteria": "90%+ coverage all packages, protected branches enforced on admins, 30+ days stability, SLAs defined, all quality gates blocking"
   },
   "architecture": {
     "languages": [
