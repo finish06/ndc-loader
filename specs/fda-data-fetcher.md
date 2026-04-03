@@ -3,7 +3,9 @@
 **Version:** 0.1.0
 **Created:** 2026-03-25
 **PRD Reference:** docs/prd.md, ndc-loader-prd.md
-**Status:** Draft
+**Status:** Done
+**Completed:** 2026-03-26
+**Milestone:** M1 — Schema & Loader
 
 ## 1. Overview
 

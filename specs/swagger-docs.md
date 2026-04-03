@@ -3,7 +3,9 @@
 **Version:** 0.1.0
 **Created:** 2026-03-27
 **PRD Reference:** docs/prd.md
-**Status:** Draft
+**Status:** Done
+**Completed:** 2026-04-01
+**Milestone:** M3 — Swagger Docs
 
 ## 1. Overview
 

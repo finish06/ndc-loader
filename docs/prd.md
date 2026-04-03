@@ -101,7 +101,7 @@ See `ndc-loader-prd.md` sections 5-6 for full schema and API contract definition
 | M1: Schema + Loader | Download, parse, load FDA data; query API with search | alpha | COMPLETE | 112K products, 212K packages, 29K applications loaded; all query endpoints verified |
 | M2: drug-cash Integration | openFDA-compatible API as drop-in replacement | alpha | COMPLETE | 14/14 AC, format parity verified against live openFDA |
 | M3: Swagger Docs | Auto-generated OpenAPI spec with Swagger UI | alpha | COMPLETE | Swagger UI at /swagger/, all endpoints documented |
-| M4: Production Readiness | Release tagging, production deploy, monitoring | beta | NEXT | Tagged release, production deployment, SLA monitoring |
+| M4: Production Readiness | Release tagging, production deploy, monitoring, public landing page | beta | NEXT | Tagged release, production deployment, SLA monitoring, rx-dag landing page live on GitHub Pages |
 
 ### Milestone Detail
 
@@ -140,7 +140,7 @@ See `ndc-loader-prd.md` sections 5-6 for full schema and API contract definition
 - [x] No authentication required for Swagger UI access
 
 #### M4: Production Readiness [NEXT]
-**Goal:** Stable release with production deployment and monitoring
+**Goal:** Stable release with production deployment, monitoring, and public landing page
 **Appetite:** 1 week
 **Target maturity:** beta
 **Features:**
@@ -148,11 +148,14 @@ See `ndc-loader-prd.md` sections 5-6 for full schema and API contract definition
 - Production deployment workflow
 - SLA monitoring and alerting
 - Performance baselines
+- rx-dag landing page on GitHub Pages with config-driven root redirect
 **Success criteria:**
 - [ ] Tagged v1.0.0 release
 - [ ] Production deploy via tagged release
 - [ ] Response time baselines established
 - [ ] Uptime monitoring configured
+- [ ] rx-dag landing page live on GitHub Pages
+- [ ] GET / redirects to landing page via LANDING_URL env var
 
 ### Maturity Promotion Path
 
@@ -188,7 +191,7 @@ Auto-generated OpenAPI spec via swaggo/swag annotations, served through Swagger 
 
 ## 9. Open Questions
 
-- Should the loader expose a bulk export endpoint (`GET /api/ndc/export?format=csv`) for downstream analytics?
+- ~~Should the loader expose a bulk export endpoint (`GET /api/ndc/export?format=csv`) for downstream analytics?~~ **Resolved:** No. Downstream consumers query the REST API directly; no bulk export endpoint will be provided.
 - Include excluded NDCs (`NDC_EXCLUDE_FLAG=Y`)? ~13K products — bulk ingredients, compounding components. Exclude by default, include via query param?
 - ~~NDC format normalization depth — FDA uses multiple formats (4-4-2, 5-3-2, 5-4-1). Store canonical + accept any?~~ **Resolved:** All formats accepted and normalized. Tries 4-4-2, 5-3-2, 5-4-1 patterns for unhyphenated input.
 

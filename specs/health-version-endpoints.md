@@ -3,7 +3,9 @@
 **Version:** 0.1.0
 **Created:** 2026-03-29
 **PRD Reference:** docs/prd.md
-**Status:** Draft
+**Status:** Done
+**Completed:** 2026-03-29
+**Milestone:** M1 — Schema & Loader
 
 ## 1. Overview
 

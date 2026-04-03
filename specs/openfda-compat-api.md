@@ -3,7 +3,9 @@
 **Version:** 0.1.0
 **Created:** 2026-03-26
 **PRD Reference:** ndc-loader-prd.md (Section 7 — drug-cash Integration)
-**Status:** Draft
+**Status:** Done
+**Completed:** 2026-03-27
+**Milestone:** M2 — drug-cash Integration
 
 ## 1. Overview
 
