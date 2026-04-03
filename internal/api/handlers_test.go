@@ -75,7 +75,7 @@ func TestVersionHandler(t *testing.T) {
 }
 
 func TestNewRouter_HealthNoAuth(t *testing.T) {
-	router := NewRouter(nil, []string{"secret-key"}, nil, nil, nil, nil)
+	router := NewRouter(nil, []string{"secret-key"}, nil, nil, nil, nil, "")
 
 	// Health endpoint should work without API key.
 	req := httptest.NewRequest(http.MethodGet, "/health", nil)
@@ -88,7 +88,7 @@ func TestNewRouter_HealthNoAuth(t *testing.T) {
 }
 
 func TestNewRouter_AdminRequiresAuth(t *testing.T) {
-	router := NewRouter(nil, []string{"secret-key"}, nil, nil, nil, nil)
+	router := NewRouter(nil, []string{"secret-key"}, nil, nil, nil, nil, "")
 
 	// Admin endpoint should require API key.
 	req := httptest.NewRequest(http.MethodPost, "/api/admin/load", bytes.NewReader([]byte("{}")))
@@ -105,7 +105,7 @@ func TestNewRouter_AdminWithAuth(t *testing.T) {
 		mockCheckpointQuerier:    newMockCheckpointQuerier(),
 		mockLastLoadInfoProvider: &mockLastLoadInfoProvider{},
 	}
-	router := NewRouter(nil, []string{"secret-key"}, nil, mockCS, nil, nil)
+	router := NewRouter(nil, []string{"secret-key"}, nil, mockCS, nil, nil, "")
 
 	req := httptest.NewRequest(http.MethodGet, "/api/admin/load/test-load-id", nil)
 	req.Header.Set("X-API-Key", "secret-key")

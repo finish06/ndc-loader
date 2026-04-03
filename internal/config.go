@@ -20,6 +20,7 @@ func LoadConfig() (*model.Config, error) {
 		LogLevel:        envOrDefault("LOG_LEVEL", "info"),
 		LogFormat:       envOrDefault("LOG_FORMAT", "json"),
 		DatasetsFile:    envOrDefault("DATASETS_FILE", "datasets.yaml"),
+		LandingURL:      os.Getenv("LANDING_URL"),
 	}
 
 	maxRetry, err := strconv.Atoi(envOrDefault("MAX_RETRY_ATTEMPTS", "3"))

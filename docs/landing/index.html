@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>rx-dag — Fast, Local FDA Drug Data API</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-primary: #0f172a;
+      --bg-card: #1e293b;
+      --bg-code: #0d1117;
+      --accent: #10b981;
+      --accent-secondary: #0d9488;
+      --accent-glow: rgba(16, 185, 129, 0.15);
+      --text-primary: #f1f5f9;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --border: #334155;
+      --font-body: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --font-mono: "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", monospace;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .container { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+
+    /* ─── Hero ─── */
+    .hero {
+      padding: 100px 0 80px;
+      text-align: center;
+    }
+    .hero-badge {
+      display: inline-block;
+      padding: 4px 14px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 24px;
+    }
+    .hero h1 {
+      font-size: clamp(40px, 6vw, 64px);
+      font-weight: 700;
+      letter-spacing: -2px;
+      line-height: 1.1;
+      margin-bottom: 20px;
+    }
+    .hero h1 span {
+      background: linear-gradient(135deg, var(--accent), var(--accent-secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero p {
+      font-size: 18px;
+      color: var(--text-secondary);
+      max-width: 600px;
+      margin: 0 auto 36px;
+    }
+    .hero-buttons { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 28px;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 600;
+      transition: all 0.2s ease;
+      border: none;
+      cursor: pointer;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent-secondary));
+      color: #fff;
+    }
+    .btn-primary:hover { opacity: 0.9; text-decoration: none; }
+    .btn-secondary {
+      background: transparent;
+      color: var(--text-primary);
+      border: 1px solid var(--border);
+    }
+    .btn-secondary:hover { border-color: var(--accent); text-decoration: none; }
+
+    /* ─── Stats ─── */
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 24px;
+      padding: 0 0 80px;
+      text-align: center;
+    }
+    .stat-value {
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--accent);
+    }
+    .stat-label {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* ─── Section ─── */
+    .section { padding: 80px 0; }
+    .section-label {
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 12px;
+    }
+    .section-title {
+      font-size: 32px;
+      font-weight: 700;
+      letter-spacing: -1px;
+      margin-bottom: 16px;
+    }
+    .section-desc {
+      font-size: 16px;
+      color: var(--text-secondary);
+      max-width: 600px;
+      margin-bottom: 48px;
+    }
+
+    /* ─── Feature Cards ─── */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 24px;
+    }
+    .feature-card {
+      background: linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 32px;
+      transition: border-color 0.2s ease;
+    }
+    .feature-card:hover { border-color: var(--accent); }
+    .feature-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: var(--accent-glow);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      margin-bottom: 20px;
+    }
+    .feature-card h3 {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    .feature-card p {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    /* ─── API Showcase ─── */
+    .api-section { border-top: 1px solid var(--border); }
+    .api-examples { display: flex; flex-direction: column; gap: 32px; }
+    .api-example {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+    .api-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border);
+    }
+    .api-method {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      background: var(--accent-glow);
+      color: var(--accent);
+    }
+    .api-path {
+      font-family: var(--font-mono);
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+    .api-desc {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-left: auto;
+    }
+    .api-body { display: grid; grid-template-columns: 1fr 1fr; }
+    .api-curl, .api-response { padding: 20px 24px; }
+    .api-curl {
+      border-right: 1px solid var(--border);
+    }
+    .api-curl-label, .api-response-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+    .code-block {
+      background: var(--bg-code);
+      border-radius: 8px;
+      padding: 16px;
+      overflow-x: auto;
+      position: relative;
+    }
+    .code-block pre {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--text-primary);
+      white-space: pre;
+      margin: 0;
+    }
+    .code-block .copy-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      border-radius: 6px;
+      padding: 4px 10px;
+      font-size: 12px;
+      cursor: pointer;
+      font-family: var(--font-body);
+      transition: all 0.2s ease;
+    }
+    .code-block .copy-btn:hover { color: var(--accent); border-color: var(--accent); }
+
+    /* ─── Quick Start ─── */
+    .quickstart-section { border-top: 1px solid var(--border); }
+    .quickstart-steps { display: flex; flex-direction: column; gap: 24px; }
+    .quickstart-step {
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
+    }
+    .step-number {
+      flex-shrink: 0;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--accent-glow);
+      color: var(--accent);
+      font-weight: 700;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .step-content h4 {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    .step-content p {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 12px;
+    }
+
+    /* ─── Footer ─── */
+    .footer {
+      border-top: 1px solid var(--border);
+      padding: 48px 0;
+      text-align: center;
+    }
+    .footer-links {
+      display: flex;
+      gap: 32px;
+      justify-content: center;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+    .footer-links a {
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+    .footer-links a:hover { color: var(--accent); }
+    .footer-powered {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    /* ─── Responsive ─── */
+    @media (max-width: 768px) {
+      .hero { padding: 60px 0 48px; }
+      .api-body { grid-template-columns: 1fr; }
+      .api-curl { border-right: none; border-bottom: 1px solid var(--border); }
+      .api-desc { display: none; }
+      .stats { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 480px) {
+      .hero-buttons { flex-direction: column; align-items: center; }
+      .btn { width: 100%; justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="container">
+      <div class="hero-badge">Open Source FDA Drug Data</div>
+      <h1><span>rx-dag</span></h1>
+      <p>Fast, local FDA drug data API. Ingest the complete NDC Directory and Drugs@FDA datasets daily, serve via REST with sub-5ms lookups. Drop-in openFDA replacement.</p>
+      <div class="hero-buttons">
+        <a href="#quickstart" class="btn btn-primary">Get Started</a>
+        <a href="https://github.com/calebdunn/ndc-loader" class="btn btn-secondary" target="_blank" rel="noopener">GitHub</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Stats -->
+  <section class="container">
+    <div class="stats">
+      <div>
+        <div class="stat-value">&lt;5ms</div>
+        <div class="stat-label">P95 NDC Lookup</div>
+      </div>
+      <div>
+        <div class="stat-value">112K+</div>
+        <div class="stat-label">Products Loaded</div>
+      </div>
+      <div>
+        <div class="stat-value">212K+</div>
+        <div class="stat-label">Packages Indexed</div>
+      </div>
+      <div>
+        <div class="stat-value">Daily</div>
+        <div class="stat-label">FDA Sync</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section class="section">
+    <div class="container">
+      <div class="section-label">Features</div>
+      <div class="section-title">Everything you need for drug data</div>
+      <div class="section-desc">Replace your openFDA dependency with a self-hosted API that's faster, more reliable, and fully under your control.</div>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">&#x1F4E6;</div>
+          <h3>FDA Data Ingestion</h3>
+          <p>Automated daily download of NDC Directory and Drugs@FDA datasets. Atomic swap ensures consumers never see partial data. Checkpoint retry for reliability.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">&#x1F50D;</div>
+          <h3>NDC Lookup</h3>
+          <p>Any NDC format accepted &mdash; hyphenated, unhyphenated, 2-segment, 3-segment. Handles all FDA patterns: 4-4-2, 5-3-2, 5-4-1. Sub-5ms P95 latency.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">&#x26A1;</div>
+          <h3>Full-Text Search</h3>
+          <p>PostgreSQL-powered search across brand names, generic names, and manufacturers. Prefix matching, relevance ranking, and pagination built in.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">&#x1F504;</div>
+          <h3>openFDA Compatible</h3>
+          <p>Drop-in replacement for <code>/drug/ndc.json</code>. Same response format, same search syntax. Zero code changes for existing consumers.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- API Showcase -->
+  <section class="section api-section">
+    <div class="container">
+      <div class="section-label">API</div>
+      <div class="section-title">Simple, powerful endpoints</div>
+      <div class="section-desc">RESTful API with API key authentication. Explore interactively via the built-in Swagger UI.</div>
+
+      <div class="api-examples">
+
+        <!-- NDC Lookup -->
+        <div class="api-example">
+          <div class="api-header">
+            <span class="api-method">GET</span>
+            <span class="api-path">/api/ndc/{ndc}</span>
+            <span class="api-desc">Lookup by NDC code</span>
+          </div>
+          <div class="api-body">
+            <div class="api-curl">
+              <div class="api-curl-label">Request</div>
+              <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                <pre>curl -H "X-API-Key: your-key" \
+  https://your-host/api/ndc/0002-1433</pre>
+              </div>
+            </div>
+            <div class="api-response">
+              <div class="api-response-label">Response</div>
+              <div class="code-block">
+                <pre>{
+  "product_ndc": "0002-1433",
+  "brand_name": "Prozac",
+  "generic_name": "Fluoxetine Hydrochloride",
+  "dosage_form": "CAPSULE",
+  "route": ["ORAL"],
+  "manufacturer": "Eli Lilly and Company",
+  "packages": [
+    {
+      "package_ndc": "0002-1433-02",
+      "description": "100 CAPSULE in 1 BOTTLE"
+    }
+  ]
+}</pre>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Search -->
+        <div class="api-example">
+          <div class="api-header">
+            <span class="api-method">GET</span>
+            <span class="api-path">/api/ndc/search?q={query}</span>
+            <span class="api-desc">Full-text search</span>
+          </div>
+          <div class="api-body">
+            <div class="api-curl">
+              <div class="api-curl-label">Request</div>
+              <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                <pre>curl -H "X-API-Key: your-key" \
+  "https://your-host/api/ndc/search?q=metformin&limit=2"</pre>
+              </div>
+            </div>
+            <div class="api-response">
+              <div class="api-response-label">Response</div>
+              <div class="code-block">
+                <pre>{
+  "results": [
+    {
+      "product_ndc": "0093-7214",
+      "brand_name": "Metformin HCl",
+      "generic_name": "Metformin Hydrochloride",
+      "dosage_form": "TABLET",
+      "route": ["ORAL"]
+    }
+  ],
+  "total": 847,
+  "limit": 2,
+  "offset": 0
+}</pre>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- openFDA Compatible -->
+        <div class="api-example">
+          <div class="api-header">
+            <span class="api-method">GET</span>
+            <span class="api-path">/api/openfda/ndc.json</span>
+            <span class="api-desc">openFDA drop-in</span>
+          </div>
+          <div class="api-body">
+            <div class="api-curl">
+              <div class="api-curl-label">Request</div>
+              <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                <pre>curl -H "X-API-Key: your-key" \
+  "https://your-host/api/openfda/ndc.json?\
+search=brand_name:Prozac&limit=1"</pre>
+              </div>
+            </div>
+            <div class="api-response">
+              <div class="api-response-label">Response</div>
+              <div class="code-block">
+                <pre>{
+  "meta": {
+    "results": {
+      "skip": 0,
+      "limit": 1,
+      "total": 3
+    }
+  },
+  "results": [
+    {
+      "product_ndc": "0002-1433",
+      "brand_name": "Prozac",
+      "active_ingredients": [
+        {
+          "name": "FLUOXETINE HYDROCHLORIDE",
+          "strength": "20mg"
+        }
+      ]
+    }
+  ]
+}</pre>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Health -->
+        <div class="api-example">
+          <div class="api-header">
+            <span class="api-method">GET</span>
+            <span class="api-path">/health</span>
+            <span class="api-desc">Service health (no auth)</span>
+          </div>
+          <div class="api-body">
+            <div class="api-curl">
+              <div class="api-curl-label">Request</div>
+              <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                <pre>curl https://your-host/health</pre>
+              </div>
+            </div>
+            <div class="api-response">
+              <div class="api-response-label">Response</div>
+              <div class="code-block">
+                <pre>{
+  "status": "ok",
+  "version": "1.0.0",
+  "uptime": "72h14m",
+  "dependencies": [
+    {
+      "name": "postgres",
+      "status": "connected",
+      "latency_ms": 1
+    }
+  ]
+}</pre>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Quick Start -->
+  <section class="section quickstart-section" id="quickstart">
+    <div class="container">
+      <div class="section-label">Quick Start</div>
+      <div class="section-title">Up and running in minutes</div>
+      <div class="section-desc">rx-dag runs as a Docker Compose stack with PostgreSQL.</div>
+
+      <div class="quickstart-steps">
+        <div class="quickstart-step">
+          <div class="step-number">1</div>
+          <div class="step-content">
+            <h4>Clone and configure</h4>
+            <p>Clone the repository and set your API key.</p>
+            <div class="code-block">
+              <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+              <pre>git clone https://github.com/calebdunn/ndc-loader.git
+cd ndc-loader
+export API_KEYS="your-secret-key"</pre>
+            </div>
+          </div>
+        </div>
+
+        <div class="quickstart-step">
+          <div class="step-number">2</div>
+          <div class="step-content">
+            <h4>Start the stack</h4>
+            <p>Docker Compose brings up PostgreSQL and ndc-loader together.</p>
+            <div class="code-block">
+              <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+              <pre>docker-compose up -d</pre>
+            </div>
+          </div>
+        </div>
+
+        <div class="quickstart-step">
+          <div class="step-number">3</div>
+          <div class="step-content">
+            <h4>Trigger a data load</h4>
+            <p>Kick off the initial FDA data ingestion (runs daily automatically after this).</p>
+            <div class="code-block">
+              <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+              <pre>curl -X POST -H "X-API-Key: your-secret-key" \
+  http://localhost:8081/api/admin/load</pre>
+            </div>
+          </div>
+        </div>
+
+        <div class="quickstart-step">
+          <div class="step-number">4</div>
+          <div class="step-content">
+            <h4>Query drug data</h4>
+            <p>Once loaded, start querying the API.</p>
+            <div class="code-block">
+              <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+              <pre>curl -H "X-API-Key: your-secret-key" \
+  http://localhost:8081/api/ndc/search?q=aspirin</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-links">
+        <a href="https://github.com/calebdunn/ndc-loader" target="_blank" rel="noopener">GitHub</a>
+        <a href="https://github.com/calebdunn/ndc-loader#readme" target="_blank" rel="noopener">Documentation</a>
+        <a href="/swagger/" target="_blank" rel="noopener">Swagger UI</a>
+        <a href="/health" target="_blank" rel="noopener">Health Check</a>
+      </div>
+      <p class="footer-powered">Powered by <a href="https://github.com/calebdunn/ndc-loader">ndc-loader</a></p>
+    </div>
+  </footer>
+
+  <script>
+    function copyCode(btn) {
+      var pre = btn.parentElement.querySelector('pre');
+      navigator.clipboard.writeText(pre.textContent).then(function() {
+        btn.textContent = 'Copied!';
+        setTimeout(function() { btn.textContent = 'Copy'; }, 2000);
+      });
+    }
+  </script>
+
+</body>
+</html>

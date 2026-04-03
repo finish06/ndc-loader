@@ -28,6 +28,7 @@ func NewRouter(
 	checkpointStore CheckpointStoreProvider,
 	queryStore QueryProvider,
 	db *pgxpool.Pool,
+	landingURL string,
 ) http.Handler {
 	r := chi.NewRouter()
 
@@ -38,6 +39,7 @@ func NewRouter(
 	r.Use(middleware.Compress(5))
 
 	// Operations endpoints (no auth required).
+	r.Get("/", rootRedirectHandler(landingURL))
 	r.Get("/health", newHealthHandler(db, checkpointStore))
 	r.Get("/version", versionHandler())
 	r.Handle("/metrics", promhttp.Handler())

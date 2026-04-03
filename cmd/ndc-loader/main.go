@@ -89,7 +89,7 @@ func main() {
 	)
 
 	queryStore := store.NewQueryStore(db)
-	router := api.NewRouter(logger, cfg.APIKeys, orchestrator, checkpointStore, queryStore, db)
+	router := api.NewRouter(logger, cfg.APIKeys, orchestrator, checkpointStore, queryStore, db, cfg.LandingURL)
 
 	scheduler, err := loader.NewScheduler(logger, cfg.LoadSchedule, orchestrator)
 	if err != nil {

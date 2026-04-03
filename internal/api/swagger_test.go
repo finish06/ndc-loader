@@ -34,7 +34,7 @@ func TestSwaggerUI_NoAuth(t *testing.T) {
 		mockCheckpointQuerier:    newMockCheckpointQuerier(),
 		mockLastLoadInfoProvider: &mockLastLoadInfoProvider{},
 	}
-	router := NewRouter(nil, []string{"secret-key"}, nil, mockCS, nil, nil)
+	router := NewRouter(nil, []string{"secret-key"}, nil, mockCS, nil, nil, "")
 
 	// Swagger should work without API key.
 	req := httptest.NewRequest(http.MethodGet, "/swagger/index.html", nil)

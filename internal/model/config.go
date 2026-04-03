@@ -15,6 +15,7 @@ type Config struct {
 	LogLevel              string
 	LogFormat             string
 	DatasetsFile          string
+	LandingURL            string
 }
 
 // DatasetConfig represents a configured FDA dataset to download and ingest.
