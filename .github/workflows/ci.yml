@@ -157,16 +157,18 @@ jobs:
       - name: Create GitHub Release
         if: steps.version.outputs.is_release == 'true'
         run: |
-          gh release create v${{ steps.version.outputs.tag }} \
-            --title "v${{ steps.version.outputs.tag }}" \
-            --generate-notes \
-            --notes "## Docker Images
+          cat > /tmp/release-notes.md << 'NOTES'
+          ## Docker Images
 
-          \`\`\`
+          ```
           docker pull dockerhub.calebdunn.tech/finish06/rx-dag:${{ steps.version.outputs.tag }}
           docker pull ghcr.io/finish06/rx-dag:${{ steps.version.outputs.tag }}
-          \`\`\`
+          ```
 
-          **Docs:** [Swagger UI](https://rx-dag.calebdunn.tech/swagger/) | [API Reference](https://github.com/finish06/ndc-loader/blob/main/docs/api/endpoints.md)"
+          **Docs:** [Swagger UI](https://rx-dag.calebdunn.tech/swagger/) | [API Reference](https://github.com/finish06/ndc-loader/blob/main/docs/api/endpoints.md)
+          NOTES
+          gh release create v${{ steps.version.outputs.tag }} \
+            --title "v${{ steps.version.outputs.tag }}" \
+            --notes-file /tmp/release-notes.md
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
