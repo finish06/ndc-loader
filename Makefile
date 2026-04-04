@@ -5,7 +5,7 @@ STAGING_USER ?= $(USER)
 STAGING_DIR  ?= /opt/rx-dag
 REGISTRY     ?= dockerhub.calebdunn.tech/finish06/rx-dag
 
-.PHONY: build test lint docs deploy-staging staging-logs staging-status staging-restart
+.PHONY: build test lint docs deploy-staging staging-logs staging-status staging-restart release
 
 # ── Development ──────────────────────────────────────────────
 
@@ -129,6 +129,16 @@ staging-psql: ## Open psql on staging postgres
 	ssh -t $(STAGING_USER)@$(STAGING_HOST) "\
 		cd $(STAGING_DIR) && \
 		docker compose exec ndc-loader-postgres psql -U ndc -d ndc"
+
+# ── Release ───────────────────────────────────────────────────
+
+release: ## Tag and push a release (usage: make release VERSION=0.2.0)
+	@test -n "$(VERSION)" || (echo "Usage: make release VERSION=x.y.z" && exit 1)
+	@echo "==> Tagging v$(VERSION)..."
+	git tag -a v$(VERSION) -m "v$(VERSION)"
+	git push origin v$(VERSION)
+	@echo "==> Release v$(VERSION) tagged and pushed."
+	@echo "    CI will build, publish images, and create GitHub Release."
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | \
