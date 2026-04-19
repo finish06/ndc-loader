@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ndc-loader - Project Dashboard</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0f0f23;
+    --bg2: #161630;
+    --bg3: #1e1e3f;
+    --accent: #6366f1;
+    --accent-light: #818cf8;
+    --accent-dark: #4f46e5;
+    --accent-glow: rgba(99,102,241,0.4);
+    --done: #16a34a;
+    --verified: #22c55e;
+    --draft: #6b7280;
+    --shaped: #eab308;
+    --in-progress: #0ea5e9;
+    --text: #e2e8f0;
+    --text-muted: #94a3b8;
+    --border: #2d2d5e;
+    --card: #1a1a3e;
+  }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+  a { color: var(--accent-light); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* Sticky Nav */
+  .sticky-nav {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(15,15,35,0.95);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+  }
+  .sticky-nav .nav-inner {
+    max-width: 1200px; margin: 0 auto;
+    display: flex; align-items: center; gap: 1.5rem;
+    height: 48px; overflow-x: auto;
+  }
+  .sticky-nav .brand {
+    font-weight: 700; font-size: 1rem; color: var(--accent-light);
+    white-space: nowrap; margin-right: 1rem;
+  }
+  .sticky-nav a {
+    font-size: 0.8rem; color: var(--text-muted);
+    white-space: nowrap; transition: color .15s;
+  }
+  .sticky-nav a:hover { color: var(--accent-light); text-decoration: none; }
+
+  .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+
+  /* Header */
+  .header { text-align: center; padding: 3rem 0 2rem; }
+  .header h1 { font-size: 2.5rem; font-weight: 800; color: #fff; margin-bottom: 0.5rem; }
+  .header h1 span { color: var(--accent); }
+  .pill {
+    display: inline-block; padding: 0.2em 0.8em; border-radius: 999px;
+    font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;
+  }
+  .pill-done { background: var(--done); color: #fff; }
+  .pill-verified { background: var(--verified); color: #000; }
+  .pill-draft { background: var(--draft); color: #fff; }
+  .pill-shaped { background: var(--shaped); color: #000; }
+  .pill-in-progress { background: var(--in-progress); color: #fff; }
+  .pill-beta { background: var(--accent); color: #fff; }
+  .pill-complete { background: var(--verified); color: #000; }
+  .timestamp { color: var(--text-muted); font-size: 0.85rem; margin-top: 0.75rem; }
+
+  /* Section */
+  .section { margin-top: 3rem; }
+  .section-title {
+    font-size: 1.3rem; font-weight: 700; color: var(--accent-light);
+    border-bottom: 2px solid var(--border); padding-bottom: 0.5rem; margin-bottom: 1.5rem;
+  }
+
+  /* Cards */
+  .card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem;
+  }
+  .card-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+  }
+  .metric-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 1.25rem; text-align: center;
+  }
+  .metric-card .value {
+    font-size: 2rem; font-weight: 800; color: var(--accent-light);
+  }
+  .metric-card .label {
+    font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase;
+    letter-spacing: 0.05em; margin-top: 0.25rem;
+  }
+
+  /* Outcome Health */
+  .outcome-flow {
+    display: flex; align-items: center; justify-content: center;
+    gap: 0.5rem; flex-wrap: wrap; margin-bottom: 2rem;
+  }
+  .outcome-node {
+    background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 10px; padding: 1rem 1.5rem; text-align: center; min-width: 100px;
+  }
+  .outcome-node .count { font-size: 1.8rem; font-weight: 800; color: var(--accent-light); }
+  .outcome-node .lbl { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; }
+  .outcome-arrow { font-size: 1.5rem; color: var(--accent); }
+  .donut-wrap { display: flex; justify-content: center; margin-top: 1rem; }
+
+  /* Hill Chart */
+  .hill-chart-wrap { display: flex; justify-content: center; overflow-x: auto; }
+
+  /* Accordion */
+  .accordion-item { margin-bottom: 0.5rem; }
+  .accordion-header {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 8px; padding: 1rem 1.25rem;
+    cursor: pointer; display: flex; align-items: center; justify-content: space-between;
+    transition: background .15s;
+  }
+  .accordion-header:hover { background: var(--bg3); }
+  .accordion-header .title { font-weight: 600; }
+  .accordion-header .meta { font-size: 0.8rem; color: var(--text-muted); }
+  .accordion-header .chevron { transition: transform .2s; font-size: 0.8rem; color: var(--text-muted); }
+  .accordion-body {
+    max-height: 0; overflow: hidden; transition: max-height .3s ease;
+    background: var(--bg2); border: 1px solid var(--border);
+    border-top: none; border-radius: 0 0 8px 8px;
+  }
+  .accordion-body.open { max-height: 600px; }
+  .accordion-body-inner { padding: 1rem 1.25rem; }
+  .accordion-body table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  .accordion-body th { text-align: left; color: var(--text-muted); font-weight: 600; padding: 0.4rem 0.5rem; border-bottom: 1px solid var(--border); }
+  .accordion-body td { padding: 0.4rem 0.5rem; border-bottom: 1px solid rgba(45,45,94,0.4); }
+
+  /* Decision queue */
+  .decision-list { list-style: none; }
+  .decision-list li {
+    padding: 0.75rem 1rem; border-left: 3px solid var(--shaped);
+    background: var(--card); margin-bottom: 0.5rem; border-radius: 0 8px 8px 0;
+    font-size: 0.9rem;
+  }
+  .decision-list li strong { color: var(--shaped); }
+
+  /* Timeline */
+  .timeline { position: relative; padding-left: 2rem; }
+  .timeline::before {
+    content: ''; position: absolute; left: 8px; top: 0; bottom: 0;
+    width: 2px; background: var(--border);
+  }
+  .timeline-item { position: relative; margin-bottom: 1.25rem; }
+  .timeline-item::before {
+    content: ''; position: absolute; left: -1.65rem; top: 0.5rem;
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--accent); border: 2px solid var(--bg);
+  }
+  .timeline-item .date { font-size: 0.75rem; color: var(--text-muted); }
+  .timeline-item .event { font-size: 0.9rem; }
+  .timeline-item.milestone::before { background: var(--verified); }
+  .timeline-item.release::before { background: var(--shaped); }
+
+  /* SVG chart */
+  .chart-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; }
+
+  /* Tags row */
+  .tags-row { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.5rem; }
+
+  @media (max-width: 600px) {
+    .container { padding: 1rem; }
+    .header h1 { font-size: 1.6rem; }
+    .outcome-flow { flex-direction: column; }
+    .outcome-arrow { transform: rotate(90deg); }
+  }
+</style>
+</head>
+<body>
+
+<!-- Sticky Nav -->
+<nav class="sticky-nav">
+  <div class="nav-inner">
+    <span class="brand">ndc-loader</span>
+    <a href="#outcome">Outcome Health</a>
+    <a href="#hill">Hill Chart</a>
+    <a href="#cycles">Cycles</a>
+    <a href="#decisions">Decisions</a>
+    <a href="#intelligence">Intelligence</a>
+    <a href="#timeline">Timeline</a>
+  </div>
+</nav>
+
+<div class="container">
+
+  <!-- 1. Header -->
+  <div class="header">
+    <h1><span>ndc-loader</span></h1>
+    <p style="margin-bottom:0.5rem; color:var(--text-muted)">FDA NDC Directory bulk loader and REST API service</p>
+    <span class="pill pill-beta">Beta</span>
+    <span class="pill pill-complete" style="margin-left:0.5rem">v0.2.0</span>
+    <p class="timestamp">Generated 2026-03-25 &mdash; 7 specs &bull; 4 milestones &bull; 5 cycles &bull; 2 retros</p>
+  </div>
+
+  <!-- 2. Outcome Health -->
+  <div class="section" id="outcome">
+    <h2 class="section-title">Outcome Health</h2>
+
+    <div class="outcome-flow">
+      <div class="outcome-node">
+        <div class="count">1</div>
+        <div class="lbl">PRD</div>
+      </div>
+      <div class="outcome-arrow">&rarr;</div>
+      <div class="outcome-node">
+        <div class="count">7</div>
+        <div class="lbl">Specs</div>
+      </div>
+      <div class="outcome-arrow">&rarr;</div>
+      <div class="outcome-node">
+        <div class="count">86</div>
+        <div class="lbl">ACs</div>
+      </div>
+      <div class="outcome-arrow">&rarr;</div>
+      <div class="outcome-node" style="border-color:var(--verified)">
+        <div class="count" style="color:var(--verified)">86</div>
+        <div class="lbl">Done</div>
+      </div>
+    </div>
+
+    <div class="donut-wrap">
+      <svg width="180" height="180" viewBox="0 0 180 180">
+        <circle cx="90" cy="90" r="70" fill="none" stroke="var(--border)" stroke-width="18"/>
+        <circle cx="90" cy="90" r="70" fill="none" stroke="var(--verified)" stroke-width="18"
+          stroke-dasharray="439.82 439.82" stroke-dashoffset="0"
+          transform="rotate(-90 90 90)" stroke-linecap="round"/>
+        <text x="90" y="85" text-anchor="middle" fill="#fff" font-size="28" font-weight="800">100%</text>
+        <text x="90" y="108" text-anchor="middle" fill="var(--text-muted)" font-size="12">ACs Complete</text>
+      </svg>
+    </div>
+
+    <div class="card-grid" style="margin-top:1.5rem">
+      <div class="metric-card">
+        <div class="value" style="color:var(--verified)">7/7</div>
+        <div class="label">Specs Done</div>
+      </div>
+      <div class="metric-card">
+        <div class="value" style="color:var(--verified)">3/4</div>
+        <div class="label">Milestones Complete</div>
+      </div>
+      <div class="metric-card">
+        <div class="value" style="color:var(--verified)">5/5</div>
+        <div class="label">Cycles Complete</div>
+      </div>
+      <div class="metric-card">
+        <div class="value">2</div>
+        <div class="label">Tags Released</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Hill Chart -->
+  <div class="section" id="hill">
+    <h2 class="section-title">Hill Chart</h2>
+    <div class="hill-chart-wrap">
+      <svg width="720" height="260" viewBox="0 0 720 260">
+        <!-- Hill curve -->
+        <path d="M40,220 C40,220 180,220 270,80 C360,-60 360,220 540,220 L680,220"
+          fill="none" stroke="var(--border)" stroke-width="2" stroke-dasharray="6,4"/>
+        <!-- Labels -->
+        <text x="155" y="250" fill="var(--text-muted)" font-size="11" text-anchor="middle">Figuring out</text>
+        <text x="505" y="250" fill="var(--text-muted)" font-size="11" text-anchor="middle">Making it happen</text>
+        <line x1="360" y1="20" x2="360" y2="230" stroke="var(--border)" stroke-width="1" stroke-dasharray="4,4"/>
+
+        <!-- Feature dots - all VERIFIED = far right -->
+        <circle cx="640" cy="215" r="8" fill="var(--verified)" opacity="0.9"/>
+        <text x="640" y="200" fill="var(--text)" font-size="9" text-anchor="middle">fda-fetcher</text>
+
+        <circle cx="610" cy="215" r="8" fill="var(--verified)" opacity="0.9"/>
+        <text x="610" y="200" fill="var(--text)" font-size="9" text-anchor="middle">query-api</text>
+
+        <circle cx="580" cy="218" r="8" fill="var(--verified)" opacity="0.9"/>
+        <text x="580" y="235" fill="var(--text)" font-size="9" text-anchor="middle">openfda</text>
+
+        <circle cx="550" cy="218" r="8" fill="var(--verified)" opacity="0.9"/>
+        <text x="550" y="235" fill="var(--text)" font-size="9" text-anchor="middle">swagger</text>
+
+        <circle cx="520" cy="215" r="8" fill="var(--verified)" opacity="0.9"/>
+        <text x="520" y="200" fill="var(--text)" font-size="9" text-anchor="middle">health</text>
+
+        <circle cx="490" cy="218" r="8" fill="var(--verified)" opacity="0.9"/>
+        <text x="490" y="235" fill="var(--text)" font-size="9" text-anchor="middle">landing</text>
+
+        <circle cx="460" cy="215" r="8" fill="var(--verified)" opacity="0.9"/>
+        <text x="460" y="200" fill="var(--text)" font-size="9" text-anchor="middle">release-tag</text>
+
+        <!-- M4 SHAPED features - still at left of hill -->
+        <circle cx="100" cy="205" r="7" fill="var(--shaped)" opacity="0.8"/>
+        <text x="100" y="193" fill="var(--shaped)" font-size="9" text-anchor="middle">deploy-wf</text>
+
+        <circle cx="140" cy="200" r="7" fill="var(--shaped)" opacity="0.8"/>
+        <text x="140" y="188" fill="var(--shaped)" font-size="9" text-anchor="middle">sla-mon</text>
+
+        <circle cx="180" cy="195" r="7" fill="var(--shaped)" opacity="0.8"/>
+        <text x="180" y="183" fill="var(--shaped)" font-size="9" text-anchor="middle">perf-base</text>
+
+        <!-- Legend -->
+        <circle cx="50" cy="25" r="6" fill="var(--verified)"/>
+        <text x="62" y="29" fill="var(--text-muted)" font-size="10">Verified</text>
+        <circle cx="130" cy="25" r="6" fill="var(--shaped)"/>
+        <text x="142" y="29" fill="var(--text-muted)" font-size="10">Shaped</text>
+      </svg>
+    </div>
+  </div>
+
+  <!-- 4. Cycle Progress -->
+  <div class="section" id="cycles">
+    <h2 class="section-title">Cycle Progress</h2>
+
+    <div class="accordion-item">
+      <div class="accordion-header" onclick="toggleAccordion(this)">
+        <div>
+          <span class="title">Cycle 1 - FDA Data Fetcher</span>
+          <span class="pill pill-complete" style="margin-left:0.5rem; font-size:0.65rem">COMPLETE</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:1rem">
+          <span class="meta">M1 &bull; 2026-03-25 &rarr; 03-26 &bull; ~2d</span>
+          <span class="chevron">&#9660;</span>
+        </div>
+      </div>
+      <div class="accordion-body">
+        <div class="accordion-body-inner">
+          <table>
+            <tr><th>Feature</th><th>Start</th><th>End</th><th>Status</th><th>Notes</th></tr>
+            <tr><td>fda-data-fetcher</td><td>SPECCED</td><td>VERIFIED</td><td><span class="pill pill-verified" style="font-size:0.65rem">VERIFIED</span></td><td>18/18 AC, 90%+ coverage, 2 bugs fixed</td></tr>
+          </table>
+          <p style="margin-top:0.75rem;font-size:0.85rem;color:var(--text-muted)">Coverage: internal 100%, api 94.6%, loader 90.9%. 9 commits, golangci-lint clean.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="accordion-item">
+      <div class="accordion-header" onclick="toggleAccordion(this)">
+        <div>
+          <span class="title">Cycle 2 - E2E FDA Validation + Query API</span>
+          <span class="pill pill-complete" style="margin-left:0.5rem; font-size:0.65rem">COMPLETE</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:1rem">
+          <span class="meta">M1 close &bull; 2026-03-26 &bull; ~1d</span>
+          <span class="chevron">&#9660;</span>
+        </div>
+      </div>
+      <div class="accordion-body">
+        <div class="accordion-body-inner">
+          <table>
+            <tr><th>Feature</th><th>Start</th><th>End</th><th>Status</th><th>Notes</th></tr>
+            <tr><td>fda-data-fetcher (E2E)</td><td>IN_PROGRESS</td><td>VERIFIED</td><td><span class="pill pill-verified" style="font-size:0.65rem">VERIFIED</span></td><td>Real FDA data loaded, joins verified</td></tr>
+            <tr><td>query-api</td><td>SHAPED</td><td>VERIFIED</td><td><span class="pill pill-verified" style="font-size:0.65rem">VERIFIED</span></td><td>4 endpoints, 11 E2E tests</td></tr>
+          </table>
+          <p style="margin-top:0.75rem;font-size:0.85rem;color:var(--text-muted)">112K products, 212K packages, 29K applications. 5 bugs found and fixed. Load time ~6.5s.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="accordion-item">
+      <div class="accordion-header" onclick="toggleAccordion(this)">
+        <div>
+          <span class="title">Cycle 3 - openFDA-Compatible API</span>
+          <span class="pill pill-complete" style="margin-left:0.5rem; font-size:0.65rem">COMPLETE</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:1rem">
+          <span class="meta">M2 &bull; 2026-03-26 &rarr; 03-27 &bull; ~1d</span>
+          <span class="chevron">&#9660;</span>
+        </div>
+      </div>
+      <div class="accordion-body">
+        <div class="accordion-body-inner">
+          <table>
+            <tr><th>Feature</th><th>Start</th><th>End</th><th>Status</th><th>Notes</th></tr>
+            <tr><td>openfda-compat-api</td><td>SHAPED</td><td>VERIFIED</td><td><span class="pill pill-verified" style="font-size:0.65rem">VERIFIED</span></td><td>14/14 AC, format parity vs live openFDA</td></tr>
+          </table>
+          <p style="margin-top:0.75rem;font-size:0.85rem;color:var(--text-muted)">9 E2E + 22 unit tests. Streaming parser, O(1) swap, batch package loading.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="accordion-item">
+      <div class="accordion-header" onclick="toggleAccordion(this)">
+        <div>
+          <span class="title">Cycle 4 - Ops &amp; Polish</span>
+          <span class="pill pill-complete" style="margin-left:0.5rem; font-size:0.65rem">COMPLETE</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:1rem">
+          <span class="meta">M3 &bull; 2026-03-27 &rarr; 03-29 &bull; 2d</span>
+          <span class="chevron">&#9660;</span>
+        </div>
+      </div>
+      <div class="accordion-body">
+        <div class="accordion-body-inner">
+          <table>
+            <tr><th>Feature</th><th>Start</th><th>End</th><th>Status</th><th>Notes</th></tr>
+            <tr><td>swagger-docs</td><td>SPECCED</td><td>VERIFIED</td><td><span class="pill pill-verified" style="font-size:0.65rem">VERIFIED</span></td><td>Swagger UI at /swagger/</td></tr>
+            <tr><td>pharm-classes-structured</td><td>SHAPED</td><td>VERIFIED</td><td><span class="pill pill-verified" style="font-size:0.65rem">VERIFIED</span></td><td>EPC/MoA/PE/CS arrays</td></tr>
+            <tr><td>health-version-endpoints</td><td>SPECCED</td><td>VERIFIED</td><td><span class="pill pill-verified" style="font-size:0.65rem">VERIFIED</span></td><td>/health + /version with ldflags</td></tr>
+            <tr><td>staging-deploy</td><td>SHAPED</td><td>VERIFIED</td><td><span class="pill pill-verified" style="font-size:0.65rem">VERIFIED</span></td><td>192.168.1.145 via webhook</td></tr>
+            <tr><td>ci-pipeline</td><td>SHAPED</td><td>VERIFIED</td><td><span class="pill pill-verified" style="font-size:0.65rem">VERIFIED</span></td><td>GH Actions: lint, test, publish</td></tr>
+          </table>
+          <p style="margin-top:0.75rem;font-size:0.85rem;color:var(--text-muted)">5 features in one cycle. pgAdmin optional debug service added.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="accordion-item">
+      <div class="accordion-header" onclick="toggleAccordion(this)">
+        <div>
+          <span class="title">Cycle 5 - Landing Page + Release Tagging</span>
+          <span class="pill pill-complete" style="margin-left:0.5rem; font-size:0.65rem">COMPLETE</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:1rem">
+          <span class="meta">M4 &bull; 2026-04-03 &rarr; 04-04 &bull; ~1d</span>
+          <span class="chevron">&#9660;</span>
+        </div>
+      </div>
+      <div class="accordion-body">
+        <div class="accordion-body-inner">
+          <table>
+            <tr><th>Feature</th><th>Start</th><th>End</th><th>Status</th><th>Notes</th></tr>
+            <tr><td>landing-page</td><td>SPECCED</td><td>VERIFIED</td><td><span class="pill pill-verified" style="font-size:0.65rem">VERIFIED</span></td><td>rx-dag.calebdunn.tech on GH Pages</td></tr>
+            <tr><td>release-tagging</td><td>SHAPED</td><td>VERIFIED</td><td><span class="pill pill-verified" style="font-size:0.65rem">VERIFIED</span></td><td>make release + CI GitHub Release</td></tr>
+          </table>
+          <p style="margin-top:0.75rem;font-size:0.85rem;color:var(--text-muted)">v0.2.0 tagged. 4 PRs merged via branch protection. Fixed CI --generate-notes conflict.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. Decision Queue -->
+  <div class="section" id="decisions">
+    <h2 class="section-title">Decision Queue</h2>
+    <p style="color:var(--text-muted);font-size:0.9rem;margin-bottom:1rem;">M4 features needing specs or action before v1.0.0 can ship.</p>
+    <ul class="decision-list">
+      <li><strong>deploy-workflow</strong> &mdash; SHAPED, no spec written. Needs spec defining production deployment via tagged release (target environment, rollback strategy, smoke tests).</li>
+      <li><strong>sla-monitoring</strong> &mdash; SHAPED, no spec written. Needs spec defining uptime monitoring and alerting thresholds, integration with existing homelab monitoring.</li>
+      <li><strong>perf-baselines</strong> &mdash; SHAPED, no spec written. Needs spec defining response time baselines, benchmark methodology, and regression testing approach.</li>
+    </ul>
+    <div class="card" style="margin-top:1rem;border-color:var(--shaped)">
+      <p style="font-size:0.85rem"><strong style="color:var(--shaped)">Blocking v1.0.0:</strong> 3 SHAPED features in M4 have no specs. Write specs to unblock cycle 6 planning. M4 success criteria are 1/6 complete (landing page live; still need tagged v1.0.0, prod deploy, baselines, monitoring, root redirect).</p>
+    </div>
+  </div>
+
+  <!-- 6. Project Intelligence -->
+  <div class="section" id="intelligence">
+    <h2 class="section-title">Project Intelligence</h2>
+
+    <div class="card-grid">
+      <div class="metric-card">
+        <div class="value">30</div>
+        <div class="label">Commits</div>
+      </div>
+      <div class="metric-card">
+        <div class="value">5</div>
+        <div class="label">PRs Merged</div>
+      </div>
+      <div class="metric-card">
+        <div class="value">90%+</div>
+        <div class="label">Test Coverage</div>
+      </div>
+      <div class="metric-card">
+        <div class="value">7</div>
+        <div class="label">Bugs Fixed</div>
+      </div>
+      <div class="metric-card">
+        <div class="value">12</div>
+        <div class="label">Learnings Logged</div>
+      </div>
+      <div class="metric-card">
+        <div class="value">10d</div>
+        <div class="label">Project Age</div>
+      </div>
+      <div class="metric-card">
+        <div class="value">v0.2.0</div>
+        <div class="label">Latest Release</div>
+      </div>
+      <div class="metric-card">
+        <div class="value">Go 1.26</div>
+        <div class="label">Runtime</div>
+      </div>
+    </div>
+
+    <!-- Retro Score Trend -->
+    <div class="chart-wrap" style="margin-top:1.5rem">
+      <h3 style="font-size:1rem;font-weight:600;margin-bottom:1rem;color:var(--text)">Retro Score Trend</h3>
+      <svg width="600" height="220" viewBox="0 0 600 220">
+        <!-- Grid -->
+        <line x1="80" y1="30" x2="80" y2="180" stroke="var(--border)" stroke-width="1"/>
+        <line x1="80" y1="180" x2="560" y2="180" stroke="var(--border)" stroke-width="1"/>
+        <!-- Y axis labels (0-10) -->
+        <text x="70" y="184" fill="var(--text-muted)" font-size="10" text-anchor="end">0</text>
+        <text x="70" y="109" fill="var(--text-muted)" font-size="10" text-anchor="end">5</text>
+        <text x="70" y="34" fill="var(--text-muted)" font-size="10" text-anchor="end">10</text>
+        <line x1="80" y1="105" x2="560" y2="105" stroke="var(--border)" stroke-width="0.5" stroke-dasharray="4,4"/>
+        <line x1="80" y1="30" x2="560" y2="30" stroke="var(--border)" stroke-width="0.5" stroke-dasharray="4,4"/>
+
+        <!-- X axis labels -->
+        <text x="220" y="200" fill="var(--text-muted)" font-size="10" text-anchor="middle">2026-03-26</text>
+        <text x="420" y="200" fill="var(--text-muted)" font-size="10" text-anchor="middle">2026-04-03</text>
+
+        <!-- Collab Score (accent) : 8.5 -> y = 180 - (8.5/10)*150 = 52.5 -->
+        <line x1="220" y1="52.5" x2="420" y2="52.5" stroke="var(--accent)" stroke-width="2.5"/>
+        <circle cx="220" cy="52.5" r="5" fill="var(--accent)"/>
+        <circle cx="420" cy="52.5" r="5" fill="var(--accent)"/>
+        <text x="225" y="45" fill="var(--accent)" font-size="9">8.5</text>
+        <text x="425" y="45" fill="var(--accent)" font-size="9">8.5</text>
+
+        <!-- ADD Effectiveness (verified green) : 6.8->78, 7.2->72 -->
+        <line x1="220" y1="78" x2="420" y2="72" stroke="var(--verified)" stroke-width="2.5"/>
+        <circle cx="220" cy="78" r="5" fill="var(--verified)"/>
+        <circle cx="420" cy="72" r="5" fill="var(--verified)"/>
+        <text x="225" y="73" fill="var(--verified)" font-size="9">6.8</text>
+        <text x="425" y="67" fill="var(--verified)" font-size="9">7.2</text>
+
+        <!-- Swarm Effectiveness (in-progress blue) : 7.2->72, 6.5->82.5 -->
+        <line x1="220" y1="72" x2="420" y2="82.5" stroke="var(--in-progress)" stroke-width="2.5"/>
+        <circle cx="220" cy="72" r="5" fill="var(--in-progress)"/>
+        <circle cx="420" cy="82.5" r="5" fill="var(--in-progress)"/>
+        <text x="225" y="67" fill="var(--in-progress)" font-size="9">7.2</text>
+        <text x="425" y="78" fill="var(--in-progress)" font-size="9">6.5</text>
+
+        <!-- Legend -->
+        <circle cx="100" cy="215" r="4" fill="var(--accent)"/>
+        <text x="110" y="219" fill="var(--text-muted)" font-size="10">Collaboration</text>
+        <circle cx="220" cy="215" r="4" fill="var(--verified)"/>
+        <text x="230" y="219" fill="var(--text-muted)" font-size="10">ADD Effectiveness</text>
+        <circle cx="370" cy="215" r="4" fill="var(--in-progress)"/>
+        <text x="380" y="219" fill="var(--text-muted)" font-size="10">Swarm Effectiveness</text>
+      </svg>
+    </div>
+
+    <!-- Maturity timeline -->
+    <div class="card" style="margin-top:1rem">
+      <h3 style="font-size:1rem;font-weight:600;margin-bottom:0.75rem">Maturity Journey</h3>
+      <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
+        <div style="text-align:center">
+          <span class="pill pill-draft">Alpha</span>
+          <div style="font-size:0.75rem;color:var(--text-muted);margin-top:0.25rem">2026-03-25</div>
+        </div>
+        <span style="color:var(--accent)">&rarr;</span>
+        <div style="text-align:center">
+          <span class="pill pill-beta">Beta</span>
+          <div style="font-size:0.75rem;color:var(--text-muted);margin-top:0.25rem">2026-04-03</div>
+        </div>
+        <span style="color:var(--text-muted)">&rarr;</span>
+        <div style="text-align:center;opacity:0.4">
+          <span class="pill pill-done">Stable</span>
+          <div style="font-size:0.75rem;color:var(--text-muted);margin-top:0.25rem">Pending</div>
+        </div>
+      </div>
+      <p style="font-size:0.8rem;color:var(--text-muted);margin-top:0.75rem"><strong>Next promotion criteria:</strong> 90%+ coverage all packages, protected branches enforced on admins, 30+ days stability, SLAs defined, all quality gates blocking.</p>
+    </div>
+  </div>
+
+  <!-- 7. Timeline -->
+  <div class="section" id="timeline">
+    <h2 class="section-title">Timeline</h2>
+    <div class="timeline">
+      <div class="timeline-item">
+        <div class="date">2026-03-25</div>
+        <div class="event">Project created. ADD config initialized. fda-data-fetcher spec written (18 AC).</div>
+      </div>
+      <div class="timeline-item milestone">
+        <div class="date">2026-03-26</div>
+        <div class="event"><strong>Cycle 1 complete.</strong> FDA data fetcher implemented: 18/18 AC, 90%+ coverage. 2 bugs fixed (TrimLeadingSpace, pgx date encoding).</div>
+      </div>
+      <div class="timeline-item milestone">
+        <div class="date">2026-03-26</div>
+        <div class="event"><strong>Cycle 2 complete. M1 closed.</strong> E2E FDA validation with real data. Query API: 4 endpoints, NDC normalization, 11 E2E tests. 5 bugs fixed.</div>
+      </div>
+      <div class="timeline-item">
+        <div class="date">2026-03-26</div>
+        <div class="event">Retro #1: Collab 8.5, ADD 6.8, Swarm 7.2. Real-data testing praised. Maturity stays Alpha (6/10).</div>
+      </div>
+      <div class="timeline-item milestone">
+        <div class="date">2026-03-27</div>
+        <div class="event"><strong>Cycle 3 complete. M2 closed.</strong> openFDA-compat API: 14/14 AC, format parity verified. 9 E2E + 22 unit tests. Performance optimizations applied.</div>
+      </div>
+      <div class="timeline-item milestone">
+        <div class="date">2026-03-29</div>
+        <div class="event"><strong>Cycle 4 complete. M3 closed.</strong> 5 features in one cycle: Swagger UI, health/version, pharm classes, staging deploy, CI pipeline.</div>
+      </div>
+      <div class="timeline-item release">
+        <div class="date">2026-04-01</div>
+        <div class="event">Swagger docs verified at /swagger/. swag v1/v2 registry mismatch fixed.</div>
+      </div>
+      <div class="timeline-item">
+        <div class="date">2026-04-03</div>
+        <div class="event">Retro #2: Collab 8.5, ADD 7.2, Swarm 6.5. <strong>Maturity promoted Alpha &rarr; Beta</strong> (9/10 evidence). Repo made public.</div>
+      </div>
+      <div class="timeline-item release">
+        <div class="date">2026-04-03</div>
+        <div class="event"><strong>v0.1.0 tagged.</strong> First release. Branch protection enabled.</div>
+      </div>
+      <div class="timeline-item milestone">
+        <div class="date">2026-04-04</div>
+        <div class="event"><strong>Cycle 5 complete.</strong> Landing page deployed to rx-dag.calebdunn.tech. Release tagging automated. <strong>v0.2.0 tagged.</strong> 4 PRs merged.</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="text-align:center;padding:3rem 0 2rem;color:var(--text-muted);font-size:0.8rem">
+    ndc-loader project dashboard &mdash; generated by Claude Code
+  </div>
+</div>
+
+<script>
+function toggleAccordion(header) {
+  var body = header.nextElementSibling;
+  var chevron = header.querySelector('.chevron');
+  body.classList.toggle('open');
+  chevron.style.transform = body.classList.contains('open') ? 'rotate(180deg)' : '';
+}
+</script>
+</body>
+</html>

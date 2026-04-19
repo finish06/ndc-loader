@@ -8,6 +8,10 @@ and this project adheres to [Conventional Commits](https://www.conventionalcommi
 ## [Unreleased]
 
 ### Added
+- Landing page at rx-dag.calebdunn.tech with root redirect via `LANDING_URL` env var
+- `make release VERSION=x.y.z` convenience target for tagged releases
+- GitHub Release created automatically on v* tags with docker pull commands
+- Project dashboard generator (`/add:dashboard` → `reports/dashboard.html`)
 - Health endpoint with postgres dependency check, uptime, and data freshness (`/health`)
 - Version endpoint with build metadata injected via ldflags (`/version`)
 - Structured pharmacological classification (`pharm_classes_structured`) on internal API responses
