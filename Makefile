@@ -5,7 +5,11 @@ STAGING_USER ?= $(USER)
 STAGING_DIR  ?= /opt/rx-dag
 REGISTRY     ?= dockerhub.calebdunn.tech/finish06/rx-dag
 
-.PHONY: build test lint docs deploy-staging staging-logs staging-status staging-restart release
+# k6 performance tests (staging)
+K6_BASE_URL ?= http://192.168.1.145:8081
+K6_API_KEY  ?= pk_rxdag_staging_a8f3e1b9c4d7
+
+.PHONY: build test lint docs deploy-staging staging-logs staging-status staging-restart release k6-smoke k6-load k6-spike k6-soak k6-all
 
 # ── Development ──────────────────────────────────────────────
 
@@ -42,6 +46,30 @@ vet:
 
 docs:
 	swag init -g cmd/ndc-loader/main.go -o docs/swagger
+
+# ── k6 Performance Tests ─────────────────────────────────────
+
+k6-smoke: ## Run k6 smoke test against staging
+	k6 run tests/k6/staging.js --env SCENARIO=smoke --env BASE_URL=$(K6_BASE_URL) --env API_KEY=$(K6_API_KEY) --summary-export=/tmp/k6-smoke.json
+	@node tests/k6/compare.js smoke /tmp/k6-smoke.json
+
+k6-load: ## Run k6 load test against staging
+	k6 run tests/k6/staging.js --env SCENARIO=load --env BASE_URL=$(K6_BASE_URL) --env API_KEY=$(K6_API_KEY) --summary-export=/tmp/k6-load.json
+	@node tests/k6/compare.js load /tmp/k6-load.json
+
+k6-spike: ## Run k6 spike test against staging
+	k6 run tests/k6/staging.js --env SCENARIO=spike --env BASE_URL=$(K6_BASE_URL) --env API_KEY=$(K6_API_KEY) --summary-export=/tmp/k6-spike.json
+	@node tests/k6/compare.js spike /tmp/k6-spike.json
+
+k6-soak: ## Run k6 soak test against staging
+	k6 run tests/k6/staging.js --env SCENARIO=soak --env BASE_URL=$(K6_BASE_URL) --env API_KEY=$(K6_API_KEY) --summary-export=/tmp/k6-soak.json
+	@node tests/k6/compare.js soak /tmp/k6-soak.json
+
+k6-all: ## Run all k6 scenarios with baseline comparison
+	@echo "Running all k6 scenarios with baseline comparison..."
+	$(MAKE) k6-smoke
+	$(MAKE) k6-load
+	$(MAKE) k6-spike
 
 # ── Docker ───────────────────────────────────────────────────
 

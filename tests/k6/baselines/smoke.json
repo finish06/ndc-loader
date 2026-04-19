@@ -1,0 +1,552 @@
+{
+    "root_group": {
+        "name": "",
+        "path": "",
+        "id": "d41d8cd98f00b204e9800998ecf8427e",
+        "groups": {
+            "public endpoints": {
+                "name": "public endpoints",
+                "path": "::public endpoints",
+                "id": "27d0d78932efe4d904c9f2666b9fc44d",
+                "groups": {},
+                "checks": {
+                        "health: 200": {
+                            "name": "health: 200",
+                            "path": "::public endpoints::health: 200",
+                            "id": "5522e036412ea49a7cdafd59e181261e",
+                            "passes": 1,
+                            "fails": 0
+                        },
+                        "health: status field": {
+                            "passes": 1,
+                            "fails": 0,
+                            "name": "health: status field",
+                            "path": "::public endpoints::health: status field",
+                            "id": "633fb764f4a94d1e5a38281960221852"
+                        },
+                        "health: has dependencies": {
+                            "name": "health: has dependencies",
+                            "path": "::public endpoints::health: has dependencies",
+                            "id": "4d312ed284d76bf9815a0d690e6952e9",
+                            "passes": 1,
+                            "fails": 0
+                        },
+                        "health: has uptime": {
+                            "fails": 0,
+                            "name": "health: has uptime",
+                            "path": "::public endpoints::health: has uptime",
+                            "id": "4391ffe1079d232fdfbbc60bcb6a8a0d",
+                            "passes": 1
+                        },
+                        "health: has version": {
+                            "passes": 1,
+                            "fails": 0,
+                            "name": "health: has version",
+                            "path": "::public endpoints::health: has version",
+                            "id": "4bc52413c2fecfa437efd69598af7be8"
+                        },
+                        "version: 200": {
+                            "name": "version: 200",
+                            "path": "::public endpoints::version: 200",
+                            "id": "36d75ef0e9b137e76af20040f53b39b9",
+                            "passes": 1,
+                            "fails": 0
+                        },
+                        "version: has all fields": {
+                            "passes": 1,
+                            "fails": 0,
+                            "name": "version: has all fields",
+                            "path": "::public endpoints::version: has all fields",
+                            "id": "dc129c0d998f2eac2e38c9f8942e779f"
+                        },
+                        "metrics: 200": {
+                            "name": "metrics: 200",
+                            "path": "::public endpoints::metrics: 200",
+                            "id": "e352a5d570cf18dbf24d49328c388bf4",
+                            "passes": 1,
+                            "fails": 0
+                        },
+                        "metrics: has ndc_loader counters": {
+                            "path": "::public endpoints::metrics: has ndc_loader counters",
+                            "id": "c0597958d87089c2578ed5b4e5110546",
+                            "passes": 1,
+                            "fails": 0,
+                            "name": "metrics: has ndc_loader counters"
+                        },
+                        "swagger: 200": {
+                            "name": "swagger: 200",
+                            "path": "::public endpoints::swagger: 200",
+                            "id": "0ac54a60d5025dffb4faf06ea835d71a",
+                            "passes": 1,
+                            "fails": 0
+                        }
+                    }
+            },
+            "auth": {
+                "groups": {},
+                "checks": {
+                        "auth: 401 without key": {
+                            "name": "auth: 401 without key",
+                            "path": "::auth::auth: 401 without key",
+                            "id": "5eaad4d0348dfd62e3980b3540dbd676",
+                            "passes": 1,
+                            "fails": 0
+                        },
+                        "auth: error body": {
+                            "name": "auth: error body",
+                            "path": "::auth::auth: error body",
+                            "id": "cc1aac7c39b96bd110d0394fbea59677",
+                            "passes": 1,
+                            "fails": 0
+                        }
+                    },
+                "name": "auth",
+                "path": "::auth",
+                "id": "7974aac4a665813eaeed4ec3fc0411a7"
+            },
+            "NDC lookup": {
+                "id": "4c66d3ce1aa130e1bff09f81978c0352",
+                "groups": {},
+                "checks": {
+                        "ndc lookup: 200": {
+                            "fails": 0,
+                            "name": "ndc lookup: 200",
+                            "path": "::NDC lookup::ndc lookup: 200",
+                            "id": "4d966a87e654c22d9cdaba7a49775c65",
+                            "passes": 1
+                        },
+                        "ndc lookup: has product_ndc": {
+                            "name": "ndc lookup: has product_ndc",
+                            "path": "::NDC lookup::ndc lookup: has product_ndc",
+                            "id": "07877bb5d752fb423c24c173b102b736",
+                            "passes": 1,
+                            "fails": 0
+                        },
+                        "ndc lookup: has packages": {
+                            "name": "ndc lookup: has packages",
+                            "path": "::NDC lookup::ndc lookup: has packages",
+                            "id": "40d185a95c8a1d96a134ba16d6d814a1",
+                            "passes": 1,
+                            "fails": 0
+                        },
+                        "ndc lookup: has pharm_classes_structured": {
+                            "path": "::NDC lookup::ndc lookup: has pharm_classes_structured",
+                            "id": "a709ee3174d25fc988902692a2d5dad8",
+                            "passes": 1,
+                            "fails": 0,
+                            "name": "ndc lookup: has pharm_classes_structured"
+                        },
+                        "ndc package: 200": {
+                            "path": "::NDC lookup::ndc package: 200",
+                            "id": "aa7e33c5967b7654f3a5f15b4f01ea47",
+                            "passes": 1,
+                            "fails": 0,
+                            "name": "ndc package: 200"
+                        },
+                        "ndc package: matched_package set": {
+                            "id": "d8f7114d41b58810779b82086ea29487",
+                            "passes": 1,
+                            "fails": 0,
+                            "name": "ndc package: matched_package set",
+                            "path": "::NDC lookup::ndc package: matched_package set"
+                        },
+                        "ndc invalid: 400": {
+                            "name": "ndc invalid: 400",
+                            "path": "::NDC lookup::ndc invalid: 400",
+                            "id": "1a1053316429bb6265098a17df37cf4a",
+                            "passes": 1,
+                            "fails": 0
+                        },
+                        "ndc not found: 404": {
+                            "name": "ndc not found: 404",
+                            "path": "::NDC lookup::ndc not found: 404",
+                            "id": "85705ca71f9a6bbf415f5d764e25d3c2",
+                            "passes": 1,
+                            "fails": 0
+                        }
+                    },
+                "name": "NDC lookup",
+                "path": "::NDC lookup"
+            },
+            "search": {
+                "name": "search",
+                "path": "::search",
+                "id": "26b8520e2af4331315c3a77500b7a2a4",
+                "groups": {},
+                "checks": {
+                        "search: 200": {
+                            "name": "search: 200",
+                            "path": "::search::search: 200",
+                            "id": "85e720fd6d45011d516efef1a9ddafb8",
+                            "passes": 1,
+                            "fails": 0
+                        },
+                        "search: has results": {
+                            "name": "search: has results",
+                            "path": "::search::search: has results",
+                            "id": "641a8ef81de9205b92de024c35d244e2",
+                            "passes": 1,
+                            "fails": 0
+                        },
+                        "search: has total": {
+                            "name": "search: has total",
+                            "path": "::search::search: has total",
+                            "id": "8213f940ee1ca949fb041600e17d8051",
+                            "passes": 1,
+                            "fails": 0
+                        },
+                        "search: limit respected": {
+                            "name": "search: limit respected",
+                            "path": "::search::search: limit respected",
+                            "id": "87a2311f1cdf92866b270dbfbb18dd38",
+                            "passes": 1,
+                            "fails": 0
+                        },
+                        "search prefix: returns results": {
+                            "passes": 1,
+                            "fails": 0,
+                            "name": "search prefix: returns results",
+                            "path": "::search::search prefix: returns results",
+                            "id": "d8268f519fc52789a84784dae2550b85"
+                        },
+                        "search no query: 400": {
+                            "name": "search no query: 400",
+                            "path": "::search::search no query: 400",
+                            "id": "48e8fe4687cb6092ee4c57213c4cd070",
+                            "passes": 1,
+                            "fails": 0
+                        }
+                    }
+            },
+            "packages": {
+                "name": "packages",
+                "path": "::packages",
+                "id": "88bd6d8525477f38da4a4dd7149d5137",
+                "groups": {},
+                "checks": {
+                        "packages: 200": {
+                            "path": "::packages::packages: 200",
+                            "id": "9d8c582f1b6da3bc45da300c23a5e81d",
+                            "passes": 1,
+                            "fails": 0,
+                            "name": "packages: 200"
+                        },
+                        "packages: has array": {
+                            "id": "93d42f34856f37aa299991ad4f6cb5d0",
+                            "passes": 1,
+                            "fails": 0,
+                            "name": "packages: has array",
+                            "path": "::packages::packages: has array"
+                        },
+                        "packages: non-empty": {
+                            "name": "packages: non-empty",
+                            "path": "::packages::packages: non-empty",
+                            "id": "41ef024e0be49dfe74535b892e5637d2",
+                            "passes": 1,
+                            "fails": 0
+                        }
+                    }
+            },
+            "stats": {
+                "name": "stats",
+                "path": "::stats",
+                "id": "82f8245c4f657662f71f2d0ea5a4762d",
+                "groups": {},
+                "checks": {
+                        "stats: 200": {
+                            "name": "stats: 200",
+                            "path": "::stats::stats: 200",
+                            "id": "b281101de7e1decf7f31d37eafbed909",
+                            "passes": 1,
+                            "fails": 0
+                        },
+                        "stats: products > 100k": {
+                            "name": "stats: products > 100k",
+                            "path": "::stats::stats: products > 100k",
+                            "id": "0c5c0c88df225d7aafc5d757553e5c35",
+                            "passes": 1,
+                            "fails": 0
+                        },
+                        "stats: packages > 200k": {
+                            "passes": 1,
+                            "fails": 0,
+                            "name": "stats: packages > 200k",
+                            "path": "::stats::stats: packages > 200k",
+                            "id": "c252c0bd71aa5e52b1378515d2a76909"
+                        },
+                        "stats: applications > 20k": {
+                            "name": "stats: applications > 20k",
+                            "path": "::stats::stats: applications > 20k",
+                            "id": "a8d19052125e85c30d63b1bd330061b8",
+                            "passes": 1,
+                            "fails": 0
+                        }
+                    }
+            },
+            "openFDA compat": {
+                "id": "a9ca365312be12e58120a38e92ae512d",
+                "groups": {},
+                "checks": {
+                        "openfda: 200": {
+                            "name": "openfda: 200",
+                            "path": "::openFDA compat::openfda: 200",
+                            "id": "1a89fbf49b5c88ed9e9983b18caab5e6",
+                            "passes": 1,
+                            "fails": 0
+                        },
+                        "openfda: has meta": {
+                            "name": "openfda: has meta",
+                            "path": "::openFDA compat::openfda: has meta",
+                            "id": "8dc6f03e833704e68240d2a7aa2ff240",
+                            "passes": 1,
+                            "fails": 0
+                        },
+                        "openfda: has results": {
+                            "name": "openfda: has results",
+                            "path": "::openFDA compat::openfda: has results",
+                            "id": "fccb840deb10bd35fb030869c800eb69",
+                            "passes": 1,
+                            "fails": 0
+                        },
+                        "openfda: active_ingredients array": {
+                            "name": "openfda: active_ingredients array",
+                            "path": "::openFDA compat::openfda: active_ingredients array",
+                            "id": "490f95962c08c3e21848c04d5efd1b5b",
+                            "passes": 1,
+                            "fails": 0
+                        },
+                        "openfda: packaging array": {
+                            "passes": 1,
+                            "fails": 0,
+                            "name": "openfda: packaging array",
+                            "path": "::openFDA compat::openfda: packaging array",
+                            "id": "f3fa282bfc9c8bf74eea4a6bf356bdc8"
+                        },
+                        "openfda: route array": {
+                            "id": "386ac8126a83d23e456a8cfc55edb9e0",
+                            "passes": 1,
+                            "fails": 0,
+                            "name": "openfda: route array",
+                            "path": "::openFDA compat::openfda: route array"
+                        },
+                        "openfda: pharm_class array": {
+                            "name": "openfda: pharm_class array",
+                            "path": "::openFDA compat::openfda: pharm_class array",
+                            "id": "a4b6e110183a9c0156274cdcf6aebf35",
+                            "passes": 1,
+                            "fails": 0
+                        },
+                        "openfda: openfda nested": {
+                            "name": "openfda: openfda nested",
+                            "path": "::openFDA compat::openfda: openfda nested",
+                            "id": "b63526a6e25b9a78ccc155ec00c2ce6f",
+                            "passes": 1,
+                            "fails": 0
+                        },
+                        "openfda ndc: 200": {
+                            "name": "openfda ndc: 200",
+                            "path": "::openFDA compat::openfda ndc: 200",
+                            "id": "f961b671cf7d852689e0b43e090129d0",
+                            "passes": 1,
+                            "fails": 0
+                        },
+                        "openfda ndc: exact match": {
+                            "name": "openfda ndc: exact match",
+                            "path": "::openFDA compat::openfda ndc: exact match",
+                            "id": "2dbb9d8408dce8e9f89db389f451ecbf",
+                            "passes": 1,
+                            "fails": 0
+                        },
+                        "openfda 404: NOT_FOUND": {
+                            "path": "::openFDA compat::openfda 404: NOT_FOUND",
+                            "id": "aa6ca62771ae215826dc96a5fbf17456",
+                            "passes": 1,
+                            "fails": 0,
+                            "name": "openfda 404: NOT_FOUND"
+                        },
+                        "openfda no search: 400": {
+                            "id": "1a21cd115a6716742432e41d0c791187",
+                            "passes": 1,
+                            "fails": 0,
+                            "name": "openfda no search: 400",
+                            "path": "::openFDA compat::openfda no search: 400"
+                        }
+                    },
+                "name": "openFDA compat",
+                "path": "::openFDA compat"
+            },
+            "admin": {
+                "name": "admin",
+                "path": "::admin",
+                "id": "709a116e5cdb940511c39cfb09b44164",
+                "groups": {},
+                "checks": {
+                        "admin load status: 404": {
+                            "name": "admin load status: 404",
+                            "path": "::admin::admin load status: 404",
+                            "id": "119584c40e8e6f11a5f46bf24129eab5",
+                            "passes": 1,
+                            "fails": 0
+                        }
+                    }
+            }
+        },
+        "checks": {}
+    },
+    "metrics": {
+        "http_req_blocked": {
+            "avg": 0.2603157894736843,
+            "min": 0.001,
+            "med": 0.001,
+            "max": 4.917,
+            "p(90)": 0.0032000000000000006,
+            "p(95)": 0.4952999999999961
+        },
+        "http_req_receiving": {
+            "avg": 0.04189473684210527,
+            "min": 0.013,
+            "med": 0.037,
+            "max": 0.101,
+            "p(90)": 0.094,
+            "p(95)": 0.0983
+        },
+        "iterations": {
+            "count": 1,
+            "rate": 3.9594708563147623
+        },
+        "endpoint_hits": {
+            "count": 19,
+            "rate": 75.22994626998049
+        },
+        "http_req_failed": {
+            "passes": 7,
+            "fails": 12,
+            "value": 0.3684210526315789
+        },
+        "http_req_sending": {
+            "p(90)": 0.012800000000000002,
+            "p(95)": 0.04249999999999979,
+            "avg": 0.02115789473684211,
+            "min": 0.003,
+            "med": 0.006,
+            "max": 0.281
+        },
+        "http_req_waiting": {
+            "avg": 12.640052631578948,
+            "min": 2.776,
+            "med": 4.289,
+            "max": 121.64,
+            "p(90)": 18.679800000000007,
+            "p(95)": 39.235099999999925
+        },
+        "http_reqs": {
+            "count": 19,
+            "rate": 75.22994626998049
+        },
+        "group_duration": {
+            "p(90)": 61.98246680000001,
+            "p(95)": 99.05364989999997,
+            "avg": 31.392489625,
+            "min": 3.79425,
+            "med": 20.927104,
+            "max": 136.124833
+        },
+        "data_received": {
+            "rate": 97874.16009724462,
+            "count": 24719
+        },
+        "iteration_duration": {
+            "avg": 251.863709,
+            "min": 251.863709,
+            "med": 251.863709,
+            "max": 251.863709,
+            "p(90)": 251.863709,
+            "p(95)": 251.863709
+        },
+        "openfda_p95": {
+            "med": 0,
+            "max": 0,
+            "p(90)": 0,
+            "p(95)": 0,
+            "avg": 0,
+            "min": 0,
+            "thresholds": {
+                "p(95)<200": false
+            }
+        },
+        "data_sent": {
+            "count": 2452,
+            "rate": 9708.622539683798
+        },
+        "error_rate": {
+            "fails": 0,
+            "passes": 0,
+            "thresholds": {
+                "rate<0.05": false
+            },
+            "value": 0
+        },
+        "ndc_lookup_p95": {
+            "avg": 0,
+            "min": 0,
+            "med": 0,
+            "max": 0,
+            "p(90)": 0,
+            "p(95)": 0,
+            "thresholds": {
+                "p(95)<50": false
+            }
+        },
+        "http_req_tls_handshaking": {
+            "avg": 0,
+            "min": 0,
+            "med": 0,
+            "max": 0,
+            "p(90)": 0,
+            "p(95)": 0
+        },
+        "http_req_connecting": {
+            "avg": 0.20273684210526316,
+            "min": 0,
+            "med": 0,
+            "max": 3.852,
+            "p(90)": 0,
+            "p(95)": 0.38519999999999693
+        },
+        "http_req_duration": {
+            "avg": 12.703105263157894,
+            "min": 2.827,
+            "med": 4.638,
+            "max": 121.748,
+            "p(90)": 18.703800000000005,
+            "p(95)": 39.28189999999993,
+            "thresholds": {
+                "p(95)<500": false
+            }
+        },
+        "checks": {
+            "passes": 46,
+            "fails": 0,
+            "value": 1
+        },
+        "search_p95": {
+            "avg": 0,
+            "min": 0,
+            "med": 0,
+            "max": 0,
+            "p(90)": 0,
+            "p(95)": 0,
+            "thresholds": {
+                "p(95)<200": false
+            }
+        },
+        "http_req_duration{expected_response:true}": {
+            "avg": 17.636166666666668,
+            "min": 2.827,
+            "med": 5.514,
+            "max": 121.748,
+            "p(90)": 28.692100000000003,
+            "p(95)": 71.35204999999996
+        }
+    }
+}
