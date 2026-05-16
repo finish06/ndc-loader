@@ -1,0 +1,110 @@
+{
+  "timestamp": "2026-05-16T22:28:27Z",
+  "tool": "Read",
+  "source": "Read:/Users/calebdunn/Documents/Projects/dag-rx/internal/api/openfda_handler.go",
+  "pattern": "unicode-tag-block",
+  "severity": "critical",
+  "excerpt": "—",
+  "match_count": 1,
+  "runtime": "claude"
+}
+{
+  "timestamp": "2026-05-16T22:28:31Z",
+  "tool": "Read",
+  "source": "Read:/Users/calebdunn/Documents/Projects/dag-rx/internal/loader/orchestrator.go",
+  "pattern": "unicode-tag-block",
+  "severity": "critical",
+  "excerpt": "—",
+  "match_count": 1,
+  "runtime": "claude"
+}
+{
+  "timestamp": "2026-05-16T22:29:00Z",
+  "tool": "Read",
+  "source": "Read:/Users/calebdunn/Documents/Projects/dag-rx/internal/loader/discovery.go",
+  "pattern": "unicode-tag-block",
+  "severity": "critical",
+  "excerpt": "—",
+  "match_count": 1,
+  "runtime": "claude"
+}
+{
+  "timestamp": "2026-05-16T22:29:07Z",
+  "tool": "Bash",
+  "source": "Bash:head -100 /Users/calebdunn/Documents/Projects/dag-rx/docs/api/endpoints.md /Users/calebdunn/Documents/Projects/dag-rx/docs/data-model.md /Users/calebdunn/Documents/Projects/dag-rx/docs/deployment.md 2>&1",
+  "pattern": "unicode-tag-block",
+  "severity": "critical",
+  "excerpt": "—",
+  "match_count": 9,
+  "runtime": "claude"
+}
+{
+  "timestamp": "2026-05-16T22:29:11Z",
+  "tool": "Read",
+  "source": "Read:/Users/calebdunn/Documents/Projects/dag-rx/README.md",
+  "pattern": "unicode-tag-block",
+  "severity": "critical",
+  "excerpt": "—",
+  "match_count": 13,
+  "runtime": "claude"
+}
+{
+  "timestamp": "2026-05-16T22:29:14Z",
+  "tool": "Read",
+  "source": "Read:/Users/calebdunn/Documents/Projects/dag-rx/CLAUDE.md",
+  "pattern": "unicode-tag-block",
+  "severity": "critical",
+  "excerpt": "—",
+  "match_count": 6,
+  "runtime": "claude"
+}
+{
+  "timestamp": "2026-05-16T22:29:28Z",
+  "tool": "Bash",
+  "source": "Bash:shasum -a 256 cmd/ndc-loader/main.go internal/api/router.go internal/api/handlers.go internal/api/query_handlers.go internal/api/openfda_handler.go internal/api/health.go internal/api/version.go internal/api/redirect.go internal/api/middleware.go internal/api/metrics.go internal/api/ndc.go internal/api/openfda_types.go internal/api/pharm_classes.go internal/loader/orchestrator.go internal/loader/scheduler.go internal/loader/interfaces.go internal/loader/datasets.go internal/loader/downloader.go internal/loader/parser.go internal/loader/discovery.go internal/loader/stream_parser.go internal/model/config.go internal/model/product.go internal/model/drugsfda.go internal/store/db.go internal/store/queries.go internal/store/loader.go internal/store/checkpoint.go internal/store/stream_loader.go 2>&1",
+  "pattern": "base64-blob-suspicious",
+  "severity": "medium",
+  "excerpt": "70ef799e1d8c2a297779021e8a1e0b2ea2650e9949507abde5f41882a1142915  cmd/ndc-loader/main.go",
+  "match_count": 29,
+  "runtime": "claude"
+}
+{
+  "timestamp": "2026-05-16T22:32:59Z",
+  "tool": "Bash",
+  "source": "Bash:tail -80 /Users/calebdunn/Documents/Projects/dag-rx/docs/api/endpoints.md",
+  "pattern": "unicode-tag-block",
+  "severity": "critical",
+  "excerpt": "—",
+  "match_count": 8,
+  "runtime": "claude"
+}
+{
+  "timestamp": "2026-05-16T22:34:07Z",
+  "tool": "Read",
+  "source": "Read:/Users/calebdunn/Documents/Projects/dag-rx/.add/learnings.md",
+  "pattern": "unicode-tag-block",
+  "severity": "critical",
+  "excerpt": "—",
+  "match_count": 3,
+  "runtime": "claude"
+}
+{
+  "timestamp": "2026-05-16T22:34:11Z",
+  "tool": "Read",
+  "source": "Read:/Users/calebdunn/Documents/Projects/dag-rx/.add/learnings.md",
+  "pattern": "unicode-tag-block",
+  "severity": "critical",
+  "excerpt": "—",
+  "match_count": 14,
+  "runtime": "claude"
+}
+{
+  "timestamp": "2026-05-16T23:01:12Z",
+  "tool": "Read",
+  "source": "Read:/Users/calebdunn/Documents/Projects/dag-rx/.add/learnings-active.md",
+  "pattern": "unicode-tag-block",
+  "severity": "critical",
+  "excerpt": "—",
+  "match_count": 3,
+  "runtime": "claude"
+}
