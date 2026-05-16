@@ -1,0 +1,248 @@
+{
+  "version": "1.0.0",
+  "generated": "2026-05-16T17:30:00Z",
+  "archetype": "web-api",
+  "stack": {
+    "languages": ["go"],
+    "framework": "chi",
+    "database": "postgresql",
+    "doc_tools": ["swaggo/swag"]
+  },
+  "directories": {
+    "entry_points": ["internal/api"],
+    "types": ["internal/model", "internal/api", "internal/store"],
+    "services": ["internal/loader", "internal/store"],
+    "tests": ["tests/unit", "tests/integration", "tests/e2e", "tests/k6"],
+    "docs": ["docs", "docs/api", "docs/swagger", "docs/milestones", "docs/plans", "specs"]
+  },
+  "entry_points": [
+    {
+      "name": "rootRedirectHandler",
+      "kind": "route",
+      "detail": {"method": "GET", "path": "/"},
+      "file": "internal/api/redirect.go",
+      "function": "rootRedirectHandler",
+      "interceptors": ["RequestID", "RealIP", "Recoverer", "Compress"],
+      "tags": ["operations"],
+      "signature": {"auth": false}
+    },
+    {
+      "name": "newHealthHandler",
+      "kind": "route",
+      "detail": {"method": "GET", "path": "/health"},
+      "file": "internal/api/health.go",
+      "function": "newHealthHandler",
+      "interceptors": ["RequestID", "RealIP", "Recoverer", "Compress"],
+      "tags": ["Operations"],
+      "signature": {"auth": false, "response": "HealthResponse"}
+    },
+    {
+      "name": "versionHandler",
+      "kind": "route",
+      "detail": {"method": "GET", "path": "/version"},
+      "file": "internal/api/version.go",
+      "function": "versionHandler",
+      "interceptors": ["RequestID", "RealIP", "Recoverer", "Compress"],
+      "tags": ["Operations"],
+      "signature": {"auth": false}
+    },
+    {
+      "name": "metrics",
+      "kind": "route",
+      "detail": {"method": "ANY", "path": "/metrics"},
+      "file": "internal/api/router.go",
+      "function": "promhttp.Handler",
+      "interceptors": ["RequestID", "RealIP", "Recoverer", "Compress"],
+      "tags": ["Operations"],
+      "signature": {"auth": false}
+    },
+    {
+      "name": "swagger",
+      "kind": "route",
+      "detail": {"method": "GET", "path": "/swagger/*"},
+      "file": "internal/api/router.go",
+      "function": "httpSwagger.WrapHandler",
+      "interceptors": ["RequestID", "RealIP", "Recoverer", "Compress"],
+      "tags": ["Operations"],
+      "signature": {"auth": false}
+    },
+    {
+      "name": "AdminHandler.TriggerLoad",
+      "kind": "route",
+      "detail": {"method": "POST", "path": "/api/admin/load"},
+      "file": "internal/api/handlers.go",
+      "function": "TriggerLoad",
+      "interceptors": ["RequestID", "RealIP", "Recoverer", "Compress", "APIKeyAuth"],
+      "tags": ["Admin"],
+      "signature": {"auth": true, "request": "TriggerLoadRequest", "response": "TriggerLoadResponse"}
+    },
+    {
+      "name": "AdminHandler.GetLoadStatus",
+      "kind": "route",
+      "detail": {"method": "GET", "path": "/api/admin/load/{loadID}"},
+      "file": "internal/api/handlers.go",
+      "function": "GetLoadStatus",
+      "interceptors": ["RequestID", "RealIP", "Recoverer", "Compress", "APIKeyAuth"],
+      "tags": ["Admin"],
+      "signature": {"auth": true, "response": "LoadStatusResponse"}
+    },
+    {
+      "name": "QueryHandler.SearchNDC",
+      "kind": "route",
+      "detail": {"method": "GET", "path": "/api/ndc/search"},
+      "file": "internal/api/query_handlers.go",
+      "function": "SearchNDC",
+      "interceptors": ["RequestID", "RealIP", "Recoverer", "Compress", "APIKeyAuth"],
+      "tags": ["Query"],
+      "signature": {"auth": true}
+    },
+    {
+      "name": "QueryHandler.GetStats",
+      "kind": "route",
+      "detail": {"method": "GET", "path": "/api/ndc/stats"},
+      "file": "internal/api/query_handlers.go",
+      "function": "GetStats",
+      "interceptors": ["RequestID", "RealIP", "Recoverer", "Compress", "APIKeyAuth"],
+      "tags": ["Query"],
+      "signature": {"auth": true, "response": "store.StatsResult"}
+    },
+    {
+      "name": "QueryHandler.ListPackages",
+      "kind": "route",
+      "detail": {"method": "GET", "path": "/api/ndc/{ndc}/packages"},
+      "file": "internal/api/query_handlers.go",
+      "function": "ListPackages",
+      "interceptors": ["RequestID", "RealIP", "Recoverer", "Compress", "APIKeyAuth"],
+      "tags": ["Query"],
+      "signature": {"auth": true}
+    },
+    {
+      "name": "QueryHandler.LookupNDC",
+      "kind": "route",
+      "detail": {"method": "GET", "path": "/api/ndc/{ndc}"},
+      "file": "internal/api/query_handlers.go",
+      "function": "LookupNDC",
+      "interceptors": ["RequestID", "RealIP", "Recoverer", "Compress", "APIKeyAuth"],
+      "tags": ["Query"],
+      "signature": {"auth": true, "response": "store.ProductResult"}
+    },
+    {
+      "name": "OpenFDAHandler.HandleNDCJSON",
+      "kind": "route",
+      "detail": {"method": "GET", "path": "/api/openfda/ndc.json"},
+      "file": "internal/api/openfda_handler.go",
+      "function": "HandleNDCJSON",
+      "interceptors": ["RequestID", "RealIP", "Recoverer", "Compress", "APIKeyAuth"],
+      "tags": ["OpenFDA"],
+      "signature": {"auth": true, "response": "OpenFDAResponse"}
+    }
+  ],
+  "interceptors": [
+    {"name": "RequestID", "file": "chi/middleware", "order": 1, "purpose": "Inject request ID"},
+    {"name": "RealIP", "file": "chi/middleware", "order": 2, "purpose": "Extract real client IP from headers"},
+    {"name": "Recoverer", "file": "chi/middleware", "order": 3, "purpose": "Recover panics, return 500"},
+    {"name": "Compress", "file": "chi/middleware", "order": 4, "purpose": "Gzip compress responses (level 5)"},
+    {"name": "APIKeyAuth", "file": "internal/api/middleware.go", "order": 5, "purpose": "Validate X-API-Key header against allowlist"}
+  ],
+  "types": [
+    {"name": "Product", "file": "internal/model/product.go", "field_count": 19, "relationships": ["Package"]},
+    {"name": "Package", "file": "internal/model/product.go", "field_count": 9, "relationships": ["Product"]},
+    {"name": "Application", "file": "internal/model/drugsfda.go", "field_count": 4, "relationships": ["DrugsFDAProduct", "Submission"]},
+    {"name": "DrugsFDAProduct", "file": "internal/model/drugsfda.go", "field_count": 9, "relationships": ["Application"]},
+    {"name": "Submission", "file": "internal/model/drugsfda.go", "field_count": 8, "relationships": ["Application"]},
+    {"name": "MarketingStatus", "file": "internal/model/drugsfda.go", "field_count": 5, "relationships": ["Application"]},
+    {"name": "ActiveIngredient", "file": "internal/model/drugsfda.go", "field_count": 5, "relationships": ["Application"]},
+    {"name": "TECode", "file": "internal/model/drugsfda.go", "field_count": 4, "relationships": ["Application"]},
+    {"name": "Config", "file": "internal/model/config.go", "field_count": 12, "relationships": []},
+    {"name": "DatasetConfig", "file": "internal/model/config.go", "field_count": 5, "relationships": ["FileConfig"]},
+    {"name": "FileConfig", "file": "internal/model/config.go", "field_count": 4, "relationships": ["DatasetConfig"]},
+    {"name": "LoadCheckpoint", "file": "internal/model/config.go", "field_count": 11, "relationships": []},
+    {"name": "ProductResult", "file": "internal/store/queries.go", "field_count": 17, "relationships": ["PackageResult"]},
+    {"name": "PackageResult", "file": "internal/store/queries.go", "field_count": 3, "relationships": []},
+    {"name": "SearchResult", "file": "internal/store/queries.go", "field_count": 6, "relationships": []},
+    {"name": "StatsResult", "file": "internal/store/queries.go", "field_count": 5, "relationships": []},
+    {"name": "HealthResponse", "file": "internal/api/health.go", "field_count": 7, "relationships": ["DependencyCheck"]},
+    {"name": "DependencyCheck", "file": "internal/api/health.go", "field_count": 4, "relationships": []},
+    {"name": "TriggerLoadRequest", "file": "internal/api/handlers.go", "field_count": 2, "relationships": []},
+    {"name": "TriggerLoadResponse", "file": "internal/api/handlers.go", "field_count": 3, "relationships": []},
+    {"name": "LoadStatusResponse", "file": "internal/api/handlers.go", "field_count": 4, "relationships": ["CheckpointStatus"]},
+    {"name": "CheckpointStatus", "file": "internal/api/handlers.go", "field_count": 6, "relationships": []},
+    {"name": "OpenFDAResponse", "file": "internal/api/openfda_types.go", "field_count": 2, "relationships": ["OpenFDAMeta", "OpenFDAProduct"]},
+    {"name": "OpenFDAProduct", "file": "internal/api/openfda_types.go", "field_count": 18, "relationships": ["OpenFDAActiveIngredient", "OpenFDAPackaging", "OpenFDANested"]},
+    {"name": "PharmClassification", "file": "internal/api/pharm_classes.go", "field_count": 5, "relationships": []},
+    {"name": "NDCParseResult", "file": "internal/api/ndc.go", "field_count": 4, "relationships": []}
+  ],
+  "services": [
+    {"name": "Orchestrator", "file": "internal/loader/orchestrator.go", "public_functions": ["NewOrchestrator", "RunLoad", "GetActiveLoadID"]},
+    {"name": "Scheduler", "file": "internal/loader/scheduler.go", "public_functions": ["NewScheduler", "Start", "Stop"]},
+    {"name": "Downloader", "file": "internal/loader/downloader.go", "public_functions": ["NewDownloader", "Download", "Extract", "Cleanup"]},
+    {"name": "DataLoader", "file": "internal/store/loader.go", "public_functions": ["NewDataLoader", "BulkLoad", "CheckRowCountSafety", "GetTableColumns"]},
+    {"name": "CheckpointStore", "file": "internal/store/checkpoint.go", "public_functions": ["NewCheckpointStore", "CreateCheckpoint", "UpdateStatus", "SetRowCount", "SetError", "GetCheckpoints", "GetLoadedTables", "HasActiveLoad", "GetLastLoadInfo"]},
+    {"name": "QueryStore", "file": "internal/store/queries.go", "public_functions": ["NewQueryStore", "LookupByProductNDC", "LookupByPackageNDC", "SearchProducts", "GetPackagesByProductNDC", "GetStats", "OpenFDASearch"]},
+    {"name": "Parser", "file": "internal/loader/parser.go", "public_functions": ["ParseTabDelimited", "MapColumns"]},
+    {"name": "StreamParser", "file": "internal/loader/stream_parser.go", "public_functions": ["StreamParse"]},
+    {"name": "Discovery", "file": "internal/loader/discovery.go", "public_functions": ["DiscoverDatasets"]},
+    {"name": "NDC", "file": "internal/api/ndc.go", "public_functions": ["ParseNDC", "NDCSearchVariants"]},
+    {"name": "OpenFDASearch", "file": "internal/api/openfda_search.go", "public_functions": ["ParseOpenFDASearch", "BuildSearchQuery"]},
+    {"name": "OpenFDATransform", "file": "internal/api/openfda_transform.go", "public_functions": ["TransformToOpenFDA"]},
+    {"name": "PharmClasses", "file": "internal/api/pharm_classes.go", "public_functions": ["ParsePharmClasses"]}
+  ],
+  "existing_docs": [
+    {"path": "README.md", "last_modified": "2026-03-29T13:18:04Z", "topic": "project-overview", "type": "readme"},
+    {"path": "CLAUDE.md", "last_modified": "2026-03-26T17:21:14Z", "topic": "agent-context", "type": "readme"},
+    {"path": "docs/prd.md", "last_modified": "2026-03-25", "topic": "product-requirements", "type": "spec"},
+    {"path": "docs/api/endpoints.md", "last_modified": "2026-03-29T13:18:55Z", "topic": "api-reference", "type": "api"},
+    {"path": "docs/data-model.md", "last_modified": "2026-03-29T13:20:02Z", "topic": "data-model", "type": "api"},
+    {"path": "docs/deployment.md", "last_modified": "2026-03-29T13:19:25Z", "topic": "deployment", "type": "other"},
+    {"path": "docs/swagger/swagger.json", "last_modified": "auto-generated", "topic": "openapi-spec", "type": "api"},
+    {"path": "docs/swagger/swagger.yaml", "last_modified": "auto-generated", "topic": "openapi-spec", "type": "api"},
+    {"path": "CHANGELOG.md", "last_modified": "2026-04-18T19:31:00Z", "topic": "changelog", "type": "changelog"}
+  ],
+  "flows": {
+    "documented": [
+      "request-flow",
+      "data-pipeline",
+      "checkpoint-state-machine",
+      "data-model-er",
+      "system-overview"
+    ],
+    "undocumented": [
+      "auth-middleware-flow",
+      "health-check-flow",
+      "openfda-search-parsing",
+      "load-resume-flow"
+    ],
+    "stale": []
+  },
+  "fingerprints": {
+    "cmd/ndc-loader/main.go": "70ef799e1d8c2a297779021e8a1e0b2ea2650e9949507abde5f41882a1142915",
+    "internal/api/router.go": "265f534f45f97e109cb57ba047d06ed8dc0634809d190353159df39d6cb4817b",
+    "internal/api/handlers.go": "85abb09f5d212f9f577eef26a6118ca05b8141cec699ef055f99ace00b1eaf01",
+    "internal/api/query_handlers.go": "b0d320f743747dc1551e6de30fa5971aa3bf103beb331486f21cf04bc5136d09",
+    "internal/api/openfda_handler.go": "75c2ae0d75f3fe77b08a65098f242189fdaae2e252aad8d9caa59da407d4d5c8",
+    "internal/api/health.go": "83b0325d58c8e4494ebc07df52b74389cf1ce15178223d5d3ac8b112273e6272",
+    "internal/api/version.go": "9e171b2b64a71e512bb66c86ab70c81a1da9d9ebaa3d94f820677f2abb17fe99",
+    "internal/api/redirect.go": "4bbdbae8863ee67b117a9d0ef4210c6f5ffaec78bc58633d42ded822a32e35a7",
+    "internal/api/middleware.go": "d07776b99cd058991218ecf0d44bd0ff29fc50ad929211a67b02cf085aa60e82",
+    "internal/api/metrics.go": "75f74e36c5daf68aa42a609e6ecf0d4f04dff36d28a3d8ca03f8514b7abf5dd5",
+    "internal/api/ndc.go": "f0dabe9fa192c85597cb57ba5d79b2e82458f84831ab24c0ba5c7a2b69f312fc",
+    "internal/api/openfda_types.go": "9eac20ed0cf648ef7db67c470f5e4a48a1eca2498b0e11eca89119fdaa7408f4",
+    "internal/api/pharm_classes.go": "afbdba3fdbf60c3e917de16534a58b9f3ba8863f6bbd385f1ce019c7f4db985c",
+    "internal/loader/orchestrator.go": "c0f3dda1d86331cf3848cfd0453c11a51c553d7193b3e7611fe7cadd9ab7557f",
+    "internal/loader/scheduler.go": "ce5652316b7fcf9141798f31f5d8f667d696e54fa16b588169963c1826211d69",
+    "internal/loader/interfaces.go": "7b5150618c4486ea1fb96125e600e1844d149a040520c763080e22862a07b06f",
+    "internal/loader/datasets.go": "2ea602337ca1a1888cf0277d295a563f709a4165c9038a654bba09ac78b9cc30",
+    "internal/loader/downloader.go": "a1081a253233f2f1fe912f5f5f76676371722c372db3d3521b950cd955a4b7d6",
+    "internal/loader/parser.go": "d4406229af94e1ac21ec8468d183e9f01866f97a7da655efb21b693127b81cd6",
+    "internal/loader/discovery.go": "d3a65c0a12e06200231b9d4f89169495c0a77614b265e36fcb8b20e83d45f1f5",
+    "internal/loader/stream_parser.go": "8e7444ab4c485809339e57d4bff67d14f146c67e6cda2518919417a4edac1a71",
+    "internal/model/config.go": "e0e1f6e60585998c72ff442a3d21f13506eff84c0d420a46be29f605b25716da",
+    "internal/model/product.go": "a4bc14151813d9c64e439d6c778467aae2aa2bd44ca16e60cc53f963eb62a827",
+    "internal/model/drugsfda.go": "ea2437d12ed8cf5c0064626668b1c263d56cd3e7370a39cc3174fc84c9f44378",
+    "internal/store/db.go": "470445080af60b83dc369f6c7b29b0f4dac78b64c5fba048e1b932d9399a0763",
+    "internal/store/queries.go": "01436a9174c2848fdb4a8db231a9bca69b5de449e8e33c2c98a761adc60b87f4",
+    "internal/store/loader.go": "e30493c46e7522b28a293eb9269ec6b1eb57a8a2d47892bad412cf51f275798a",
+    "internal/store/checkpoint.go": "d3a3d6a3c19d9ded334061255d69bf5cc9b69c3013e976a8ae4eee7f804f5c09",
+    "internal/store/stream_loader.go": "457742e6036352f54cf67a73dd8f3c63f5c1b63f54bdf916cb88910ce4064428"
+  }
+}

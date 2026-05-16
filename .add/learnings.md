@@ -55,6 +55,7 @@
 - 2026-03-26: Cycle 2 complete. E2E FDA validation + Query API. 2 features VERIFIED, 5 bugs fixed, 11 E2E tests. M1 closed with 10/10 criteria met.
 - 2026-03-27: Cycle 3 complete. openFDA-compat API for drug-cash. 14/14 AC, format parity verified against live openFDA API, 9 E2E + 22 unit tests. M2 closed with 6/6 criteria met.
 - 2026-03-27: Performance optimizations applied: streaming parser (single-pass), O(1) table swap (DROP+RENAME vs INSERT SELECT), batch package loading (eliminates N+1 queries).
+- 2026-05-16: /add:docs first run. docs/swagger spec was ~6 weeks stale — `swag init` added openFDA endpoints, root redirect, and refreshed response models. Wrote .add/docs-manifest.json + docs/architecture-diagrams.md, patched CLAUDE.md to reflect tier-3 envs, k6 dir, and new diagram file. Lesson L-001 logged: wire `make docs` into pre-push to prevent silent drift.
 
 ## Profile Update Candidates
 <!-- Cross-project patterns flagged for promotion to ~/.claude/add/profile.md -->
