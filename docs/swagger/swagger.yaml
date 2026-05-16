@@ -15,6 +15,36 @@ definitions:
       table:
         type: string
     type: object
+  api.DependencyCheck:
+    properties:
+      error:
+        type: string
+      latency_ms:
+        type: number
+      name:
+        type: string
+      status:
+        type: string
+    type: object
+  api.HealthResponse:
+    properties:
+      data_age_hours:
+        type: number
+      dependencies:
+        items:
+          $ref: '#/definitions/api.DependencyCheck'
+        type: array
+      last_load:
+        type: string
+      start_time:
+        type: string
+      status:
+        type: string
+      uptime:
+        type: string
+      version:
+        type: string
+    type: object
   api.LoadStatusResponse:
     properties:
       checkpoints:
@@ -218,6 +248,7 @@ definitions:
         type: array
       pharm_classes:
         type: string
+      pharm_classes_structured: {}
       product_ndc:
         type: string
       route:
@@ -240,7 +271,6 @@ definitions:
       products:
         type: integer
     type: object
-host: ""
 info:
   contact: {}
   description: FDA NDC Directory bulk loader and REST API. Ingests NDC Directory and
@@ -249,6 +279,18 @@ info:
   title: ndc-loader API
   version: "1.0"
 paths:
+  /:
+    get:
+      description: Redirects to the landing page (if LANDING_URL is set) or Swagger
+        UI
+      produces:
+      - text/html
+      responses:
+        "302":
+          description: Redirect to landing page or /swagger/
+      summary: Root redirect
+      tags:
+      - operations
   /api/admin/load:
     post:
       consumes:
@@ -513,17 +555,32 @@ paths:
       - OpenFDA
   /health:
     get:
-      description: Returns service health status and data freshness. Degrades to "degraded"
-        when data is >48 hours old. No authentication required.
+      description: Returns service health status, uptime, dependency checks (postgres),
+        and data freshness. No authentication required.
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/api.HealthResponse'
       summary: Health check
+      tags:
+      - Operations
+  /version:
+    get:
+      description: Returns git commit, branch, Go version, OS, architecture, and build
+        time. No authentication required.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Build and version info
       tags:
       - Operations
 securityDefinitions:

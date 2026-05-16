@@ -223,6 +223,12 @@ Check load status with per-table checkpoint details.
 
 ## Operations Endpoints
 
+### GET /
+
+Redirects to `LANDING_URL` if configured, otherwise `/swagger/`. **No auth required.**
+
+**Response:** `302 Found` with `Location` header.
+
 ### GET /health
 
 Comprehensive health check with dependency status. **No auth required.**
