@@ -1,4 +1,3 @@
-basePath: /
 definitions:
   api.CheckpointStatus:
     properties:
@@ -273,11 +272,6 @@ definitions:
     type: object
 info:
   contact: {}
-  description: FDA NDC Directory bulk loader and REST API. Ingests NDC Directory and
-    Drugs@FDA datasets daily, serves via REST with full-text search and NDC format
-    normalization.
-  title: ndc-loader API
-  version: "1.0"
 paths:
   /:
     get:
@@ -583,9 +577,4 @@ paths:
       summary: Build and version info
       tags:
       - Operations
-securityDefinitions:
-  ApiKeyAuth:
-    in: header
-    name: X-API-Key
-    type: apiKey
 swagger: "2.0"
