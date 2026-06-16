@@ -17,7 +17,7 @@ func TransformToOpenFDA(p *store.ProductResult) OpenFDAProduct {
 		MarketingCategory:  deref(p.MarketingCategory),
 		DosageForm:         deref(p.DosageForm),
 		SPLID:              "",
-		ProductType:        "HUMAN PRESCRIPTION DRUG",
+		ProductType:        deref(p.ProductType),
 		MarketingStartDate: "",
 		ProductID:          "",
 		ApplicationNumber:  deref(p.ApplicationNumber),

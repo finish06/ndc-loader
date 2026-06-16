@@ -198,3 +198,49 @@ func TestBulkLoad_AtomicSwap(t *testing.T) {
 	// Cleanup.
 	tdb.Pool.Exec(ctx, "DELETE FROM applications")
 }
+
+// Issue #5: OpenFDASearch must fetch the real product_type column so the openFDA
+// response reflects OTC / animal / bulk products, not a hardcoded prescription type.
+func TestOpenFDASearch_FetchesRealProductType(t *testing.T) {
+	tdb := getTestDB(t)
+	defer tdb.Pool.Close()
+
+	ctx := context.Background()
+	tdb.Pool.Exec(ctx, "DELETE FROM products WHERE product_ndc LIKE 'ISSUE5-%'")
+
+	want := map[string]string{
+		"ISSUE5-RX":   "HUMAN PRESCRIPTION DRUG",
+		"ISSUE5-OTC":  "HUMAN OTC DRUG",
+		"ISSUE5-ANIM": "NON-PRESCRIPTION ANIMAL DRUG",
+		"ISSUE5-BULK": "BULK INGREDIENT",
+	}
+	for ndc, ptype := range want {
+		_, err := tdb.Pool.Exec(ctx,
+			"INSERT INTO products (product_id, product_ndc, product_type) VALUES ($1, $2, $3)",
+			ndc+"_id", ndc, ptype,
+		)
+		if err != nil {
+			t.Fatalf("insert %s: %v", ndc, err)
+		}
+	}
+	defer tdb.Pool.Exec(ctx, "DELETE FROM products WHERE product_ndc LIKE 'ISSUE5-%'")
+
+	q := store.NewQueryStore(tdb.Pool)
+	results, total, err := q.OpenFDASearch(ctx, "product_ndc LIKE $1", []interface{}{"ISSUE5-%"}, len(want), 0)
+	if err != nil {
+		t.Fatalf("OpenFDASearch: %v", err)
+	}
+	if total != len(want) {
+		t.Fatalf("expected %d results, got %d", len(want), total)
+	}
+
+	for _, r := range results {
+		if r.ProductType == nil {
+			t.Errorf("%s: product_type is nil — not fetched from DB", r.ProductNDC)
+			continue
+		}
+		if *r.ProductType != want[r.ProductNDC] {
+			t.Errorf("%s: expected product_type %q, got %q", r.ProductNDC, want[r.ProductNDC], *r.ProductType)
+		}
+	}
+}

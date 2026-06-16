@@ -238,7 +238,7 @@ func (q *QueryStore) OpenFDASearch(ctx context.Context, whereClause string, args
 		SELECT product_id, product_ndc, proprietary_name, nonproprietary_name,
 		       dosage_form, route, labeler_name, substance_name,
 		       strength, strength_unit, pharm_classes, dea_schedule,
-		       marketing_category, application_number
+		       marketing_category, product_type, application_number
 		FROM products
 		WHERE %s
 		ORDER BY product_ndc
@@ -260,7 +260,7 @@ func (q *QueryStore) OpenFDASearch(ctx context.Context, whereClause string, args
 			&productID, &p.ProductNDC, &p.BrandName, &p.GenericName,
 			&p.DosageForm, &p.Route, &p.Manufacturer, &p.ActiveIngredient,
 			&p.Strength, &p.StrengthUnit, &p.PharmClasses, &p.DEASchedule,
-			&p.MarketingCategory, &p.ApplicationNumber,
+			&p.MarketingCategory, &p.ProductType, &p.ApplicationNumber,
 		); err != nil {
 			return nil, 0, fmt.Errorf("scanning openfda result: %w", err)
 		}
