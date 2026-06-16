@@ -34,6 +34,21 @@ func TestHealthHandler_PostgresDisconnected_ReturnsNon200(t *testing.T) {
 	}
 }
 
+// Issue #7: degraded/error states must map to 503 so an httpGet readiness probe
+// pulls an unhealthy pod; ok (and anything else) stays 200.
+func TestHealthStatusCode(t *testing.T) {
+	cases := map[string]int{
+		"ok":       http.StatusOK,
+		"degraded": http.StatusServiceUnavailable,
+		"error":    http.StatusServiceUnavailable,
+	}
+	for status, want := range cases {
+		if got := healthStatusCode(status); got != want {
+			t.Errorf("healthStatusCode(%q) = %d, want %d", status, got, want)
+		}
+	}
+}
+
 func TestCheckPostgres_NilPool(t *testing.T) {
 	check := checkPostgres(context.Background(), nil)
 

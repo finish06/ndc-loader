@@ -36,7 +36,8 @@ type HealthResponse struct {
 //	@Description	Returns service health status, uptime, dependency checks (postgres), and data freshness. No authentication required.
 //	@Tags			Operations
 //	@Produce		json
-//	@Success		200	{object}	HealthResponse
+//	@Success		200	{object}	HealthResponse	"status ok"
+//	@Failure		503	{object}	HealthResponse	"status degraded or error (postgres disconnected / data stale)"
 //	@Router			/health [get]
 func newHealthHandler(db *pgxpool.Pool, checkpointStore LastLoadInfoProvider) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -81,7 +82,21 @@ func newHealthHandler(db *pgxpool.Pool, checkpointStore LastLoadInfoProvider) ht
 		}
 
 		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(healthStatusCode(status))
 		_ = json.NewEncoder(w).Encode(resp)
+	}
+}
+
+// healthStatusCode maps a health status to the HTTP status code so that
+// status-code-based monitors and k8s httpGet probes can detect an unhealthy
+// pod. "error" (postgres disconnected) and "degraded" (data stale or never
+// loaded) both yield 503 so the pod is pulled from the ready pool; "ok" is 200.
+func healthStatusCode(status string) int {
+	switch status {
+	case "error", "degraded":
+		return http.StatusServiceUnavailable
+	default:
+		return http.StatusOK
 	}
 }
 
