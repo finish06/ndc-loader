@@ -79,7 +79,7 @@ func TestSearchProducts_ExcludedProductHiddenByDefault(t *testing.T) {
 	ctx := context.Background()
 	q := store.NewQueryStore(tdb.Pool)
 
-	results, total, err := q.SearchProducts(ctx, "ZZZEXCLUDEFIX", 50, 0)
+	results, total, err := q.SearchProducts(ctx, "ZZZEXCLUDEFIX", 50, 0, false)
 	if err != nil {
 		t.Fatalf("SearchProducts: %v", err)
 	}
@@ -90,6 +90,15 @@ func TestSearchProducts_ExcludedProductHiddenByDefault(t *testing.T) {
 		if r.ProductNDC == "90000-002" {
 			t.Errorf("excluded product 90000-002 leaked into search results")
 		}
+	}
+
+	// Opt-in: include_excluded=true surfaces both products.
+	_, totalAll, err := q.SearchProducts(ctx, "ZZZEXCLUDEFIX", 50, 0, true)
+	if err != nil {
+		t.Fatalf("SearchProducts(includeExcluded): %v", err)
+	}
+	if totalAll != 2 {
+		t.Errorf("expected total=2 with includeExcluded, got %d", totalAll)
 	}
 }
 
@@ -104,13 +113,18 @@ func TestLookupByProductNDC_ExcludedProductNotFoundByDefault(t *testing.T) {
 	ctx := context.Background()
 	q := store.NewQueryStore(tdb.Pool)
 
-	if _, err := q.LookupByProductNDC(ctx, []string{"90000-002"}); err == nil {
+	if _, err := q.LookupByProductNDC(ctx, []string{"90000-002"}, false); err == nil {
 		t.Errorf("expected not-found for excluded product 90000-002, got a result")
 	}
 
 	// The normal product must still resolve.
-	if _, err := q.LookupByProductNDC(ctx, []string{"90000-001"}); err != nil {
+	if _, err := q.LookupByProductNDC(ctx, []string{"90000-001"}, false); err != nil {
 		t.Errorf("expected normal product 90000-001 to resolve, got: %v", err)
+	}
+
+	// Opt-in: include_excluded=true resolves the excluded product.
+	if _, err := q.LookupByProductNDC(ctx, []string{"90000-002"}, true); err != nil {
+		t.Errorf("expected excluded product 90000-002 to resolve with includeExcluded, got: %v", err)
 	}
 }
 
@@ -125,8 +139,13 @@ func TestLookupByPackageNDC_ExcludedPackageNotFoundByDefault(t *testing.T) {
 	ctx := context.Background()
 	q := store.NewQueryStore(tdb.Pool)
 
-	if _, _, err := q.LookupByPackageNDC(ctx, []string{"90000-001-99"}); err == nil {
+	if _, _, err := q.LookupByPackageNDC(ctx, []string{"90000-001-99"}, false); err == nil {
 		t.Errorf("expected not-found for excluded package 90000-001-99, got a result")
+	}
+
+	// Opt-in: include_excluded=true resolves the excluded package.
+	if _, _, err := q.LookupByPackageNDC(ctx, []string{"90000-001-99"}, true); err != nil {
+		t.Errorf("expected excluded package 90000-001-99 to resolve with includeExcluded, got: %v", err)
 	}
 }
 
@@ -141,7 +160,7 @@ func TestGetPackagesByProductNDC_ExcludedPackageHiddenByDefault(t *testing.T) {
 	ctx := context.Background()
 	q := store.NewQueryStore(tdb.Pool)
 
-	pkgs, err := q.GetPackagesByProductNDC(ctx, "90000-001")
+	pkgs, err := q.GetPackagesByProductNDC(ctx, "90000-001", false)
 	if err != nil {
 		t.Fatalf("GetPackagesByProductNDC: %v", err)
 	}
@@ -149,6 +168,15 @@ func TestGetPackagesByProductNDC_ExcludedPackageHiddenByDefault(t *testing.T) {
 		if p.NDC == "90000-001-99" {
 			t.Errorf("excluded package 90000-001-99 leaked into results")
 		}
+	}
+
+	// Opt-in: include_excluded=true returns the excluded package.
+	allPkgs, err := q.GetPackagesByProductNDC(ctx, "90000-001", true)
+	if err != nil {
+		t.Fatalf("GetPackagesByProductNDC(includeExcluded): %v", err)
+	}
+	if len(allPkgs) != 2 {
+		t.Errorf("expected 2 packages with includeExcluded, got %d", len(allPkgs))
 	}
 }
 
@@ -164,7 +192,7 @@ func TestOpenFDASearch_ExcludedProductHiddenByDefault(t *testing.T) {
 	q := store.NewQueryStore(tdb.Pool)
 
 	products, total, err := q.OpenFDASearch(ctx, "proprietary_name = $1",
-		[]interface{}{"ZZZEXCLUDEFIX"}, 100, 0)
+		[]interface{}{"ZZZEXCLUDEFIX"}, 100, 0, false)
 	if err != nil {
 		t.Fatalf("OpenFDASearch: %v", err)
 	}
@@ -175,5 +203,15 @@ func TestOpenFDASearch_ExcludedProductHiddenByDefault(t *testing.T) {
 		if p.ProductNDC == "90000-002" {
 			t.Errorf("excluded product 90000-002 leaked into openFDA results")
 		}
+	}
+
+	// Opt-in: include_excluded=true surfaces both products.
+	_, totalAll, err := q.OpenFDASearch(ctx, "proprietary_name = $1",
+		[]interface{}{"ZZZEXCLUDEFIX"}, 100, 0, true)
+	if err != nil {
+		t.Fatalf("OpenFDASearch(includeExcluded): %v", err)
+	}
+	if totalAll != 2 {
+		t.Errorf("expected total=2 with includeExcluded, got %d", totalAll)
 	}
 }
