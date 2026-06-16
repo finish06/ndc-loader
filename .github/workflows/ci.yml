@@ -90,7 +90,13 @@ jobs:
           username: ${{ secrets.REGISTRY_USERNAME }}
           password: ${{ secrets.REGISTRY_PASSWORD }}
 
+      # GitHub Container Registry (ghcr.io) and the built-in GITHUB_TOKEN only
+      # exist on GitHub. github.server_url is 'https://github.com' on GitHub and
+      # the Gitea instance URL on Gitea Actions, so this guard keeps the step
+      # behaving exactly as before on GitHub and skips it on Gitea (which pushes
+      # to dockerhub.calebdunn.tech only).
       - name: Login to GitHub Container Registry
+        if: ${{ github.server_url == 'https://github.com' }}
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
@@ -113,7 +119,7 @@ jobs:
             GIT_BRANCH=${{ github.ref_name }}
           tags: |
             dockerhub.calebdunn.tech/finish06/rx-dag:beta
-            ghcr.io/finish06/rx-dag:beta
+            ${{ github.server_url == 'https://github.com' && 'ghcr.io/finish06/rx-dag:beta' || '' }}
 
       - name: Trigger staging deploy
         id: deploy
@@ -151,11 +157,11 @@ jobs:
           tags: |
             dockerhub.calebdunn.tech/finish06/rx-dag:${{ steps.version.outputs.tag }}
             dockerhub.calebdunn.tech/finish06/rx-dag:latest
-            ghcr.io/finish06/rx-dag:${{ steps.version.outputs.tag }}
-            ghcr.io/finish06/rx-dag:latest
+            ${{ github.server_url == 'https://github.com' && format('ghcr.io/finish06/rx-dag:{0}', steps.version.outputs.tag) || '' }}
+            ${{ github.server_url == 'https://github.com' && 'ghcr.io/finish06/rx-dag:latest' || '' }}
 
       - name: Create GitHub Release
-        if: steps.version.outputs.is_release == 'true'
+        if: ${{ steps.version.outputs.is_release == 'true' && github.server_url == 'https://github.com' }}
         run: |
           cat > /tmp/release-notes.md << 'NOTES'
           ## Docker Images

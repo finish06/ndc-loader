@@ -20,6 +20,12 @@ concurrency:
 jobs:
   deploy:
     name: GitHub Pages
+    # GitHub Pages (configure-pages / upload-pages-artifact / deploy-pages and the
+    # github-pages environment) only exists on GitHub. github.server_url is
+    # 'https://github.com' on GitHub and the Gitea instance URL on Gitea Actions,
+    # so on Gitea this job is skipped (the run shows as skipped, not failed) while
+    # remaining fully intact on GitHub.
+    if: ${{ github.server_url == 'https://github.com' }}
     runs-on: ubuntu-latest
     environment:
       name: github-pages
