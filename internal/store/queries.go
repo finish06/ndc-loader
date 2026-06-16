@@ -312,5 +312,19 @@ func (q *QueryStore) GetStats(ctx context.Context) (*StatsResult, error) {
 	`).Scan(&lastLoaded)
 	s.LastLoaded = lastLoaded
 
+	// Wall-clock duration of the most recent completed load run, in seconds.
+	_ = q.db.QueryRow(ctx, `
+		SELECT EXTRACT(EPOCH FROM (MAX(completed_at) - MIN(started_at)))
+		FROM load_checkpoints
+		WHERE load_id = (
+			SELECT load_id FROM load_checkpoints
+			WHERE status = 'loaded' AND completed_at IS NOT NULL
+			ORDER BY completed_at DESC LIMIT 1
+		)
+		AND started_at IS NOT NULL AND completed_at IS NOT NULL
+	`).Scan(&s.LoadDuration)
+
+	s.Source = q.source
+
 	return &s, nil
 }
