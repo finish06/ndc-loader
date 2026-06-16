@@ -199,11 +199,13 @@ func (h *QueryHandler) ListPackages(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	productVariants := NDCSearchVariants(parsed.ProductNDC)
+	productVariants := ProductNDCVariants(ndcInput, parsed)
+	matchedNDC := parsed.ProductNDC
 	var packages []store.PackageResult
 	for _, v := range productVariants {
 		packages, err = h.queryStore.GetPackagesByProductNDC(r.Context(), v)
 		if err == nil && len(packages) > 0 {
+			matchedNDC = v
 			break
 		}
 	}
@@ -213,7 +215,7 @@ func (h *QueryHandler) ListPackages(w http.ResponseWriter, r *http.Request) {
 	}
 
 	resp := map[string]interface{}{
-		"product_ndc": parsed.ProductNDC,
+		"product_ndc": matchedNDC,
 		"packages":    packages,
 	}
 
