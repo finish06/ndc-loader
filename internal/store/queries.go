@@ -9,12 +9,14 @@ import (
 
 // QueryStore handles read queries for NDC and drug data.
 type QueryStore struct {
-	db *pgxpool.Pool
+	db     *pgxpool.Pool
+	source string
 }
 
-// NewQueryStore creates a new QueryStore.
-func NewQueryStore(db *pgxpool.Pool) *QueryStore {
-	return &QueryStore{db: db}
+// NewQueryStore creates a new QueryStore. source is the dataset download URL
+// reported by the stats endpoint (see specs/query-api.md AC-009).
+func NewQueryStore(db *pgxpool.Pool, source string) *QueryStore {
+	return &QueryStore{db: db, source: source}
 }
 
 // ProductResult is the API response for a single product lookup.
@@ -61,6 +63,7 @@ type StatsResult struct {
 	Applications int      `json:"applications"`
 	LastLoaded   *string  `json:"last_loaded"`
 	LoadDuration *float64 `json:"load_duration_seconds"`
+	Source       string   `json:"source"`
 }
 
 // LookupByProductNDC finds a product by its 2-segment product NDC.

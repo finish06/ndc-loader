@@ -88,7 +88,15 @@ func main() {
 		datasetsCfg,
 	)
 
-	queryStore := store.NewQueryStore(db)
+	// Stats reports the NDC Directory bulk download URL as its data source.
+	statsSource := cfg.FDADownloadsURL
+	for _, ds := range datasetsCfg.Datasets {
+		if ds.Name == "ndc_directory" {
+			statsSource = ds.SourceURL
+			break
+		}
+	}
+	queryStore := store.NewQueryStore(db, statsSource)
 	router := api.NewRouter(logger, cfg.APIKeys, orchestrator, checkpointStore, queryStore, db, cfg.LandingURL)
 
 	scheduler, err := loader.NewScheduler(logger, cfg.LoadSchedule, orchestrator)
