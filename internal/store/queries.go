@@ -34,6 +34,7 @@ type ProductResult struct {
 	PharmClassesStructured interface{}     `json:"pharm_classes_structured,omitempty"`
 	DEASchedule            *string         `json:"dea_schedule"`
 	MarketingCategory      *string         `json:"marketing_category"`
+	ProductType            *string         `json:"product_type"`
 	ApplicationNumber      *string         `json:"application_number"`
 	Packages               []PackageResult `json:"packages"`
 	MatchedPackage         *string         `json:"matched_package"`
