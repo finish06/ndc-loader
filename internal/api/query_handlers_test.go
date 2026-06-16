@@ -189,6 +189,43 @@ func TestQueryHandler_Packages(t *testing.T) {
 	}
 }
 
+// Issue #8: a drug whose product NDC is stored in 5-3 form ("12345-678") must
+// return its packages when queried via the 10-digit unhyphenated NDC. Before the
+// fix, ListPackages only tried the 4-4 product variant and returned an empty list.
+func TestQueryHandler_Packages_TenDigit_FiveThreeLabeler_ReturnsPackages(t *testing.T) {
+	mock := &mockQueryProvider{
+		packagesFn: func(_ context.Context, productNDC string) ([]store.PackageResult, error) {
+			// Only the 5-3 product variant matches this drug.
+			if productNDC == "12345-678" {
+				return []store.PackageResult{{NDC: "12345-678-90", Description: strPtr("30 TABLET")}}, nil
+			}
+			return nil, nil
+		},
+	}
+	router := setupQueryTestRouter(mock)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/ndc/1234567890/packages", nil)
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
+	}
+	var resp struct {
+		ProductNDC string                `json:"product_ndc"`
+		Packages   []store.PackageResult `json:"packages"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	if len(resp.Packages) != 1 {
+		t.Fatalf("expected 1 package for 5-3 labeler via 10-digit NDC, got %d: %s", len(resp.Packages), rec.Body.String())
+	}
+	if resp.ProductNDC != "12345-678" {
+		t.Errorf("expected product_ndc 12345-678 (the matched variant), got %s", resp.ProductNDC)
+	}
+}
+
 func TestQueryHandler_Packages_InvalidNDC(t *testing.T) {
 	mock := &mockQueryProvider{}
 	router := setupQueryTestRouter(mock)
