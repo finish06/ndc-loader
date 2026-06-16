@@ -879,6 +879,9 @@
                 },
                 "products": {
                     "type": "integer"
+                },
+                "source": {
+                    "type": "string"
                 }
             }
         }
