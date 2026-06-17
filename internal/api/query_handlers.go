@@ -14,12 +14,20 @@ import (
 
 // QueryProvider abstracts query operations for unit testing.
 type QueryProvider interface {
-	LookupByProductNDC(ctx context.Context, variants []string) (*store.ProductResult, error)
-	LookupByPackageNDC(ctx context.Context, variants []string) (*store.ProductResult, string, error)
-	SearchProducts(ctx context.Context, query string, limit, offset int) ([]store.SearchResult, int, error)
-	GetPackagesByProductNDC(ctx context.Context, productNDC string) ([]store.PackageResult, error)
+	LookupByProductNDC(ctx context.Context, variants []string, includeExcluded bool) (*store.ProductResult, error)
+	LookupByPackageNDC(ctx context.Context, variants []string, includeExcluded bool) (*store.ProductResult, string, error)
+	SearchProducts(ctx context.Context, query string, limit, offset int, includeExcluded bool) ([]store.SearchResult, int, error)
+	GetPackagesByProductNDC(ctx context.Context, productNDC string, includeExcluded bool) ([]store.PackageResult, error)
 	GetStats(ctx context.Context) (*store.StatsResult, error)
-	OpenFDASearch(ctx context.Context, whereClause string, args []interface{}, limit, skip int) ([]store.ProductResult, int, error)
+	OpenFDASearch(ctx context.Context, whereClause string, args []interface{}, limit, skip int, includeExcluded bool) ([]store.ProductResult, int, error)
+}
+
+// parseIncludeExcluded reports whether the caller opted in to ndc_exclude=TRUE
+// products via ?include_excluded=true. Excluded NDCs (bulk ingredients,
+// compounding components) are hidden by default (issue #10).
+func parseIncludeExcluded(r *http.Request) bool {
+	v, _ := strconv.ParseBool(r.URL.Query().Get("include_excluded"))
+	return v
 }
 
 // QueryHandler handles NDC query API endpoints.
@@ -64,19 +72,20 @@ func (h *QueryHandler) LookupNDC(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var product *store.ProductResult
+	includeExcluded := parseIncludeExcluded(r)
 
 	if parsed.Type == NDCTypePackage {
 		// 3-segment or 10-digit: look up by package NDC.
 		packageVariants := NDCSearchVariants(ndcInput)
 		var matchedNDC string
-		product, matchedNDC, err = h.queryStore.LookupByPackageNDC(r.Context(), packageVariants)
+		product, matchedNDC, err = h.queryStore.LookupByPackageNDC(r.Context(), packageVariants, includeExcluded)
 		if err == nil {
 			product.MatchedPackage = &matchedNDC
 		}
 	} else {
 		// 2-segment: look up by product NDC.
 		productVariants := NDCSearchVariants(ndcInput)
-		product, err = h.queryStore.LookupByProductNDC(r.Context(), productVariants)
+		product, err = h.queryStore.LookupByProductNDC(r.Context(), productVariants, includeExcluded)
 	}
 
 	if err != nil {
@@ -148,7 +157,7 @@ func (h *QueryHandler) SearchNDC(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	results, total, err := h.queryStore.SearchProducts(r.Context(), query, limit, offset)
+	results, total, err := h.queryStore.SearchProducts(r.Context(), query, limit, offset, parseIncludeExcluded(r))
 	if err != nil {
 		h.logger.Error("search failed", "query", query, "error", err)
 		w.Header().Set("Content-Type", "application/json")
@@ -201,9 +210,10 @@ func (h *QueryHandler) ListPackages(w http.ResponseWriter, r *http.Request) {
 
 	productVariants := ProductNDCVariants(ndcInput, parsed)
 	matchedNDC := parsed.ProductNDC
+	includeExcluded := parseIncludeExcluded(r)
 	var packages []store.PackageResult
 	for _, v := range productVariants {
-		packages, err = h.queryStore.GetPackagesByProductNDC(r.Context(), v)
+		packages, err = h.queryStore.GetPackagesByProductNDC(r.Context(), v, includeExcluded)
 		if err == nil && len(packages) > 0 {
 			matchedNDC = v
 			break
