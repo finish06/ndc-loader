@@ -446,7 +446,13 @@ const docTemplate = `{
                 "summary": "Health check",
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "status ok",
+                        "schema": {
+                            "$ref": "#/definitions/api.HealthResponse"
+                        }
+                    },
+                    "503": {
+                        "description": "status degraded or error (postgres disconnected / data stale)",
                         "schema": {
                             "$ref": "#/definitions/api.HealthResponse"
                         }
@@ -861,6 +867,9 @@ const docTemplate = `{
                 },
                 "pharm_classes_structured": {},
                 "product_ndc": {
+                    "type": "string"
+                },
+                "product_type": {
                     "type": "string"
                 },
                 "route": {
