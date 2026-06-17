@@ -84,6 +84,35 @@ func TestTransformToOpenFDA_BasicProduct(t *testing.T) {
 	}
 }
 
+// Issue #5: product_type was hardcoded to "HUMAN PRESCRIPTION DRUG" for every
+// product, so OTC, animal, and bulk-ingredient products got the wrong type.
+// The transform must reflect the actual product_type fetched from the DB.
+func TestTransformToOpenFDA_ProductTypeNotHardcodedToPrescription(t *testing.T) {
+	cases := []struct {
+		name        string
+		productType string
+	}{
+		{"otc", "HUMAN OTC DRUG"},
+		{"animal", "NON-PRESCRIPTION ANIMAL DRUG"},
+		{"bulk", "BULK INGREDIENT"},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			p := &store.ProductResult{
+				ProductNDC:  "1234-5678",
+				ProductType: strPtr(tc.productType),
+			}
+
+			result := TransformToOpenFDA(p)
+
+			if result.ProductType != tc.productType {
+				t.Errorf("expected product_type %q, got %q", tc.productType, result.ProductType)
+			}
+		})
+	}
+}
+
 func TestTransformToOpenFDA_MultipleIngredients(t *testing.T) {
 	p := &store.ProductResult{
 		ProductNDC:       "1234-5678",

@@ -434,7 +434,13 @@
                 "summary": "Health check",
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "status ok",
+                        "schema": {
+                            "$ref": "#/definitions/api.HealthResponse"
+                        }
+                    },
+                    "503": {
+                        "description": "status degraded or error (postgres disconnected / data stale)",
                         "schema": {
                             "$ref": "#/definitions/api.HealthResponse"
                         }
@@ -851,6 +857,9 @@
                 "product_ndc": {
                     "type": "string"
                 },
+                "product_type": {
+                    "type": "string"
+                },
                 "route": {
                     "type": "string"
                 },
@@ -879,6 +888,9 @@
                 },
                 "products": {
                     "type": "integer"
+                },
+                "source": {
+                    "type": "string"
                 }
             }
         }

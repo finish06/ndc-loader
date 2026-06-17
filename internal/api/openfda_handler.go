@@ -72,7 +72,7 @@ func (h *OpenFDAHandler) HandleNDCJSON(w http.ResponseWriter, r *http.Request) {
 	whereClause, args := BuildSearchQuery(clauses)
 
 	// Execute query.
-	products, total, err := h.queryStore.OpenFDASearch(r.Context(), whereClause, args, limit, skip)
+	products, total, err := h.queryStore.OpenFDASearch(r.Context(), whereClause, args, limit, skip, parseIncludeExcluded(r))
 	if err != nil {
 		h.logger.Error("openfda search failed", "search", search, "error", err)
 		h.writeError(w, http.StatusInternalServerError, "SERVER_ERROR", "Search failed")

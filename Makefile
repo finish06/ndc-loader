@@ -6,8 +6,10 @@ STAGING_DIR  ?= /opt/rx-dag
 REGISTRY     ?= dockerhub.calebdunn.tech/finish06/rx-dag
 
 # k6 performance tests (staging)
+# Supply the staging key at run time: `API_KEY=... make k6-smoke`.
+# No default — the k6 script fails loudly if API_KEY is unset (never hardcode a key in source).
 K6_BASE_URL ?= http://192.168.1.145:8081
-K6_API_KEY  ?= pk_rxdag_staging_a8f3e1b9c4d7
+K6_API_KEY  ?= $(API_KEY)
 
 .PHONY: build test lint docs deploy-staging staging-logs staging-status staging-restart release k6-smoke k6-load k6-spike k6-soak k6-all
 
