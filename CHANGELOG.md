@@ -7,6 +7,22 @@ and this project adheres to [Conventional Commits](https://www.conventionalcommi
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-06-17
+
+### Fixed
+- `SearchNDC` `limit` field now reports the applied cap instead of the requested value when results are silently capped (#4)
+- openFDA transform maps the real `product_type` from the database instead of hardcoding "HUMAN PRESCRIPTION DRUG" (#5)
+- k6 staging load test reads the API key from the `API_KEY` env var; removed the hardcoded staging key (#6)
+- `/health` returns HTTP 503 when postgres is unreachable; deployment readiness probe switched from TCP to `httpGet /health` (#7)
+- `ListPackages` tries all three NDC segment patterns (4-4-2, 5-3-2, 5-4-1) for 10-digit input instead of only 4-4-2 (#8)
+- `/api/ndc/stats` populates `load_duration_seconds` and `source` instead of returning zero/empty (#9)
+- `ndc_exclude=TRUE` products are excluded from all query results by default; opt in via `include_excluded` (#10)
+
+### Added
+- CI guard that fails the build on swagger spec drift, pinned to `swag@v1.8.1` (#11)
+
+## [0.2.0] - 2026-05-16
+
 ### Added
 - Landing page at rx-dag.calebdunn.tech with root redirect via `LANDING_URL` env var
 - `make release VERSION=x.y.z` convenience target for tagged releases
