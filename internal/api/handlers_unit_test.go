@@ -241,8 +241,10 @@ func TestHealthHandler_NoDB_WithFreshData(t *testing.T) {
 	rec := httptest.NewRecorder()
 	handler.ServeHTTP(rec, req)
 
-	if rec.Code != http.StatusOK {
-		t.Errorf("expected 200, got %d", rec.Code)
+	// Issue #7: status "error" (postgres disconnected) must surface as HTTP 503,
+	// not 200 — previously this asserted 200 and so codified the bug.
+	if rec.Code != http.StatusServiceUnavailable {
+		t.Errorf("expected 503, got %d", rec.Code)
 	}
 
 	var body HealthResponse

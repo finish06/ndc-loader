@@ -16,8 +16,9 @@ func TestHealthHandler_NoDB(t *testing.T) {
 
 	handler.ServeHTTP(rec, req)
 
-	if rec.Code != http.StatusOK {
-		t.Errorf("expected 200, got %d", rec.Code)
+	// Issue #7: nil db → status "error" → HTTP 503 (was incorrectly 200).
+	if rec.Code != http.StatusServiceUnavailable {
+		t.Errorf("expected 503, got %d", rec.Code)
 	}
 
 	var body HealthResponse
@@ -77,13 +78,15 @@ func TestVersionHandler(t *testing.T) {
 func TestNewRouter_HealthNoAuth(t *testing.T) {
 	router := NewRouter(nil, []string{"secret-key"}, nil, nil, nil, nil, "")
 
-	// Health endpoint should work without API key.
+	// Health endpoint should work without API key. With a nil db the dependency
+	// check fails and the body reports "error" → HTTP 503 (issue #7); the point
+	// of this test is that auth is NOT required, so it must not be rejected.
 	req := httptest.NewRequest(http.MethodGet, "/health", nil)
 	rec := httptest.NewRecorder()
 	router.ServeHTTP(rec, req)
 
-	if rec.Code != http.StatusOK {
-		t.Errorf("expected 200 for /health without auth, got %d", rec.Code)
+	if rec.Code == http.StatusUnauthorized || rec.Code == http.StatusForbidden {
+		t.Errorf("expected /health reachable without API key, got auth rejection %d", rec.Code)
 	}
 }
 
