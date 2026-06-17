@@ -137,6 +137,9 @@ func (h *QueryHandler) SearchNDC(w http.ResponseWriter, r *http.Request) {
 			limit = parsed
 		}
 	}
+	// Clamp to the store's cap here so the "limit" we echo in the response
+	// matches the number of results actually returned (#4).
+	limit = store.ClampSearchLimit(limit)
 
 	offset := 0
 	if o := r.URL.Query().Get("offset"); o != "" {

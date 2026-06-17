@@ -111,6 +111,37 @@ func TestQueryHandler_Search_Success(t *testing.T) {
 	}
 }
 
+// Reproduces Code/ndc-loader#4: a request for limit=999 made the handler echo
+// "limit":999 in the response while the store silently caps results at 50. The
+// envelope must report the cap actually applied, and the store must never be
+// asked for more than the cap.
+func TestQueryHandler_Search_OverLimitReportsAppliedCap(t *testing.T) {
+	var gotLimit int
+	mock := &mockQueryProvider{
+		searchFn: func(_ context.Context, _ string, limit, _ int) ([]store.SearchResult, int, error) {
+			gotLimit = limit
+			return []store.SearchResult{{ProductNDC: "0002-1433", Relevance: 0.9}}, 412, nil
+		},
+	}
+	router := setupQueryTestRouter(mock)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/ndc/search?q=aspirin&limit=999", nil)
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", rec.Code)
+	}
+	if gotLimit != 50 {
+		t.Errorf("store should receive the applied cap 50, got %d", gotLimit)
+	}
+	var resp map[string]interface{}
+	_ = json.Unmarshal(rec.Body.Bytes(), &resp)
+	if resp["limit"].(float64) != 50 {
+		t.Errorf("response should report the applied cap 50, got %v", resp["limit"])
+	}
+}
+
 func TestQueryHandler_Search_MissingQuery(t *testing.T) {
 	mock := &mockQueryProvider{}
 	router := setupQueryTestRouter(mock)

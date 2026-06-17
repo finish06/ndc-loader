@@ -118,11 +118,26 @@ func (q *QueryStore) LookupByPackageNDC(ctx context.Context, variants []string) 
 	return nil, "", fmt.Errorf("package not found")
 }
 
+// Search result paging bounds. A request outside [1, MaxSearchLimit] falls back
+// to DefaultSearchLimit.
+const (
+	MaxSearchLimit     = 100
+	DefaultSearchLimit = 50
+)
+
+// ClampSearchLimit normalizes a requested page size to the value the search
+// store will actually apply. Callers (e.g. the HTTP handler) use this so the
+// limit they report to clients matches the size of the result set returned.
+func ClampSearchLimit(limit int) int {
+	if limit <= 0 || limit > MaxSearchLimit {
+		return DefaultSearchLimit
+	}
+	return limit
+}
+
 // SearchProducts performs full-text search across product names.
 func (q *QueryStore) SearchProducts(ctx context.Context, query string, limit, offset int) ([]SearchResult, int, error) {
-	if limit <= 0 || limit > 100 {
-		limit = 50
-	}
+	limit = ClampSearchLimit(limit)
 	if offset < 0 {
 		offset = 0
 	}
