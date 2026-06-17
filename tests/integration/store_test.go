@@ -225,8 +225,8 @@ func TestOpenFDASearch_FetchesRealProductType(t *testing.T) {
 	}
 	defer tdb.Pool.Exec(ctx, "DELETE FROM products WHERE product_ndc LIKE 'ISSUE5-%'")
 
-	q := store.NewQueryStore(tdb.Pool)
-	results, total, err := q.OpenFDASearch(ctx, "product_ndc LIKE $1", []interface{}{"ISSUE5-%"}, len(want), 0)
+	q := store.NewQueryStore(tdb.Pool, "")
+	results, total, err := q.OpenFDASearch(ctx, "product_ndc LIKE $1", []interface{}{"ISSUE5-%"}, len(want), 0, false)
 	if err != nil {
 		t.Fatalf("OpenFDASearch: %v", err)
 	}

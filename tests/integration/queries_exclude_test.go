@@ -77,7 +77,7 @@ func TestSearchProducts_ExcludedProductHiddenByDefault(t *testing.T) {
 	defer cleanupExcludeFixtures(t, tdb)
 
 	ctx := context.Background()
-	q := store.NewQueryStore(tdb.Pool)
+	q := store.NewQueryStore(tdb.Pool, "")
 
 	results, total, err := q.SearchProducts(ctx, "ZZZEXCLUDEFIX", 50, 0, false)
 	if err != nil {
@@ -111,7 +111,7 @@ func TestLookupByProductNDC_ExcludedProductNotFoundByDefault(t *testing.T) {
 	defer cleanupExcludeFixtures(t, tdb)
 
 	ctx := context.Background()
-	q := store.NewQueryStore(tdb.Pool)
+	q := store.NewQueryStore(tdb.Pool, "")
 
 	if _, err := q.LookupByProductNDC(ctx, []string{"90000-002"}, false); err == nil {
 		t.Errorf("expected not-found for excluded product 90000-002, got a result")
@@ -137,7 +137,7 @@ func TestLookupByPackageNDC_ExcludedPackageNotFoundByDefault(t *testing.T) {
 	defer cleanupExcludeFixtures(t, tdb)
 
 	ctx := context.Background()
-	q := store.NewQueryStore(tdb.Pool)
+	q := store.NewQueryStore(tdb.Pool, "")
 
 	if _, _, err := q.LookupByPackageNDC(ctx, []string{"90000-001-99"}, false); err == nil {
 		t.Errorf("expected not-found for excluded package 90000-001-99, got a result")
@@ -158,7 +158,7 @@ func TestGetPackagesByProductNDC_ExcludedPackageHiddenByDefault(t *testing.T) {
 	defer cleanupExcludeFixtures(t, tdb)
 
 	ctx := context.Background()
-	q := store.NewQueryStore(tdb.Pool)
+	q := store.NewQueryStore(tdb.Pool, "")
 
 	pkgs, err := q.GetPackagesByProductNDC(ctx, "90000-001", false)
 	if err != nil {
@@ -189,7 +189,7 @@ func TestOpenFDASearch_ExcludedProductHiddenByDefault(t *testing.T) {
 	defer cleanupExcludeFixtures(t, tdb)
 
 	ctx := context.Background()
-	q := store.NewQueryStore(tdb.Pool)
+	q := store.NewQueryStore(tdb.Pool, "")
 
 	products, total, err := q.OpenFDASearch(ctx, "proprietary_name = $1",
 		[]interface{}{"ZZZEXCLUDEFIX"}, 100, 0, false)
