@@ -9,12 +9,14 @@ import (
 
 // QueryStore handles read queries for NDC and drug data.
 type QueryStore struct {
-	db *pgxpool.Pool
+	db     *pgxpool.Pool
+	source string
 }
 
-// NewQueryStore creates a new QueryStore.
-func NewQueryStore(db *pgxpool.Pool) *QueryStore {
-	return &QueryStore{db: db}
+// NewQueryStore creates a new QueryStore. source is the dataset download URL
+// reported by the stats endpoint (see specs/query-api.md AC-009).
+func NewQueryStore(db *pgxpool.Pool, source string) *QueryStore {
+	return &QueryStore{db: db, source: source}
 }
 
 // ProductResult is the API response for a single product lookup.
@@ -61,6 +63,7 @@ type StatsResult struct {
 	Applications int      `json:"applications"`
 	LastLoaded   *string  `json:"last_loaded"`
 	LoadDuration *float64 `json:"load_duration_seconds"`
+	Source       string   `json:"source"`
 }
 
 // LookupByProductNDC finds a product by its 2-segment product NDC.
@@ -323,6 +326,20 @@ func (q *QueryStore) GetStats(ctx context.Context) (*StatsResult, error) {
 		ORDER BY completed_at DESC LIMIT 1
 	`).Scan(&lastLoaded)
 	s.LastLoaded = lastLoaded
+
+	// Wall-clock duration of the most recent completed load run, in seconds.
+	_ = q.db.QueryRow(ctx, `
+		SELECT EXTRACT(EPOCH FROM (MAX(completed_at) - MIN(started_at)))
+		FROM load_checkpoints
+		WHERE load_id = (
+			SELECT load_id FROM load_checkpoints
+			WHERE status = 'loaded' AND completed_at IS NOT NULL
+			ORDER BY completed_at DESC LIMIT 1
+		)
+		AND started_at IS NOT NULL AND completed_at IS NOT NULL
+	`).Scan(&s.LoadDuration)
+
+	s.Source = q.source
 
 	return &s, nil
 }
