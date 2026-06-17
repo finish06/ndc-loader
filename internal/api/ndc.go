@@ -123,6 +123,23 @@ func parseShortNDC(input string) (*NDCParseResult, error) {
 	}
 }
 
+// ProductNDCVariants returns the candidate hyphenated product NDCs to try when
+// looking up packages for a given raw NDC input. A 10-digit unhyphenated input
+// is ambiguous, so it yields the product NDC under all three FDA segment patterns
+// (4-4, 5-3, 5-4) — mirroring NDCSearchVariants' package patterns (4-4-2, 5-3-2,
+// 5-4-1). For any other input the parsed 2-segment product NDC is authoritative.
+func ProductNDCVariants(input string, parsed *NDCParseResult) []string {
+	input = strings.TrimSpace(input)
+	if ndc10Re.MatchString(input) {
+		return []string{
+			input[0:4] + "-" + input[4:8], // 4-4 (matches 4-4-2 package)
+			input[0:5] + "-" + input[5:8], // 5-3 (matches 5-3-2 package)
+			input[0:5] + "-" + input[5:9], // 5-4 (matches 5-4-1 package)
+		}
+	}
+	return NDCSearchVariants(parsed.ProductNDC)
+}
+
 // NDCSearchVariants returns all possible hyphenated forms for a given NDC input.
 // Used for database lookup — try each variant until one matches.
 func NDCSearchVariants(input string) []string {

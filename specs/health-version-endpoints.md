@@ -32,6 +32,7 @@ As a **platform operator or deploy hook**, I want to query `/health` and `/versi
 | AC-008 | Both endpoints require no authentication | Must |
 | AC-009 | GET /health includes data_age_hours and last_load timestamp | Should |
 | AC-010 | Response times for both endpoints are <10ms | Should |
+| AC-011 | GET /health returns HTTP 503 when status is "degraded" or "error", 200 when "ok" (issue #7) | Must |
 
 ## 3. API Contract
 
@@ -73,6 +74,19 @@ As a **platform operator or deploy hook**, I want to query `/health` and `/versi
 - `"ok"` — postgres connected, data fresh (<48h)
 - `"degraded"` — postgres connected, data stale (>48h) or never loaded
 - `"error"` — postgres disconnected
+
+**HTTP response code contract (issue #7):** the HTTP status code mirrors the
+health status so that k8s `httpGet` readiness probes and status-code-based
+monitors can detect an unhealthy pod from the status line alone:
+
+| `status` | HTTP code |
+|----------|-----------|
+| `"ok"` | `200 OK` |
+| `"degraded"` | `503 Service Unavailable` |
+| `"error"` | `503 Service Unavailable` |
+
+The readiness probe for the deployment MUST use `httpGet: { path: /health, port: 8081 }`
+(not `tcpSocket`) so that a `503` removes the pod from the ready pool.
 
 ### GET /health (error state)
 

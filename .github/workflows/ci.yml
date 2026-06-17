@@ -8,8 +8,28 @@ on:
     branches: [main]
 
 jobs:
+  # Warm the Go toolchain into the runner's tool cache exactly once, before any
+  # other job runs. On self-hosted runners that share a single host-mounted
+  # /opt/hostedtoolcache across concurrently-running job containers (our
+  # homelab-runner-1), two jobs both calling setup-go for an uncached version
+  # would extract+copy Go into the SAME directory simultaneously and corrupt it
+  # mid-copy — observed as `vet: open .../src/encoding/encoding.go: no such file`
+  # and `fork/exec .../vet: no such file or directory`. Serializing the install
+  # behind this job means lint/test find Go already cached (a cache hit, no
+  # extraction) and can never race. On GitHub-hosted runners each job gets a
+  # fresh VM with no shared cache, so this is just one fast extra job — behavior
+  # is unchanged there.
+  setup:
+    name: Setup Go toolchain
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.26"
+
   lint:
     name: Lint
+    needs: [setup]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -21,8 +41,37 @@ jobs:
       - name: golangci-lint
         run: golangci-lint run ./...
 
+  docs:
+    name: Swagger drift
+    needs: [setup]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.26"
+
+      # Pin swag to the version that produced the committed spec — an unpinned
+      # (@latest) swag could itself reformat the output and report false drift.
+      - name: Install swag (pinned)
+        run: go install github.com/swaggo/swag/cmd/swag@v1.8.1
+
+      - name: Regenerate swagger spec
+        run: make docs
+
+      # Fail the build if the regenerated spec differs from what's committed.
+      # This is the guard for #11: the spec can no longer silently drift from
+      # the route annotations and reach a release.
+      - name: Fail on swagger drift
+        run: |
+          if ! git diff --exit-code -- docs/swagger; then
+            echo "::error::docs/swagger is out of date — run 'make docs' and commit the result"
+            exit 1
+          fi
+
   test:
     name: Test
+    needs: [setup]
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -63,7 +112,7 @@ jobs:
 
   publish:
     name: Publish
-    needs: [lint, test]
+    needs: [lint, test, docs]
     if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     permissions:

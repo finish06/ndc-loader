@@ -35,7 +35,7 @@ func setupQueryRouter(t *testing.T) http.Handler {
 
 	logger := slog.Default()
 	checkpointStore := store.NewCheckpointStore(db)
-	queryStore := store.NewQueryStore(db)
+	queryStore := store.NewQueryStore(db, "https://www.accessdata.fda.gov/cder/ndctext.zip")
 
 	return api.NewRouter(logger, []string{"test-key"}, nil, checkpointStore, queryStore, db, "")
 }

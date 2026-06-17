@@ -269,6 +269,8 @@ definitions:
         type: integer
       products:
         type: integer
+      source:
+        type: string
     type: object
 info:
   contact: {}

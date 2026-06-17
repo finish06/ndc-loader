@@ -18,8 +18,12 @@ import { Rate, Trend, Counter } from 'k6/metrics';
 // ---------------------------------------------------------------------------
 
 const BASE_URL = __ENV.BASE_URL || 'http://192.168.1.145:8081';
-const API_KEY  = __ENV.API_KEY  || 'pk_rxdag_staging_a8f3e1b9c4d7';
+const API_KEY  = __ENV.API_KEY;
 const SCENARIO = __ENV.SCENARIO || 'all';
+
+if (!API_KEY) {
+  throw new Error('API_KEY env var required — pass it with `--env API_KEY=...` (no default; never hardcode a key in source)');
+}
 
 const authHeaders = { 'X-API-Key': API_KEY };
 

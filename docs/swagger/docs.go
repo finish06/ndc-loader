@@ -891,6 +891,9 @@ const docTemplate = `{
                 },
                 "products": {
                     "type": "integer"
+                },
+                "source": {
+                    "type": "string"
                 }
             }
         }

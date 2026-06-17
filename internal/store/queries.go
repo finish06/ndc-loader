@@ -9,12 +9,14 @@ import (
 
 // QueryStore handles read queries for NDC and drug data.
 type QueryStore struct {
-	db *pgxpool.Pool
+	db     *pgxpool.Pool
+	source string
 }
 
-// NewQueryStore creates a new QueryStore.
-func NewQueryStore(db *pgxpool.Pool) *QueryStore {
-	return &QueryStore{db: db}
+// NewQueryStore creates a new QueryStore. source is the dataset download URL
+// reported by the stats endpoint (see specs/query-api.md AC-009).
+func NewQueryStore(db *pgxpool.Pool, source string) *QueryStore {
+	return &QueryStore{db: db, source: source}
 }
 
 // ProductResult is the API response for a single product lookup.
@@ -32,6 +34,7 @@ type ProductResult struct {
 	PharmClassesStructured interface{}     `json:"pharm_classes_structured,omitempty"`
 	DEASchedule            *string         `json:"dea_schedule"`
 	MarketingCategory      *string         `json:"marketing_category"`
+	ProductType            *string         `json:"product_type"`
 	ApplicationNumber      *string         `json:"application_number"`
 	Packages               []PackageResult `json:"packages"`
 	MatchedPackage         *string         `json:"matched_package"`
@@ -61,11 +64,25 @@ type StatsResult struct {
 	Applications int      `json:"applications"`
 	LastLoaded   *string  `json:"last_loaded"`
 	LoadDuration *float64 `json:"load_duration_seconds"`
+	Source       string   `json:"source"`
+}
+
+// excludeFilter returns a SQL fragment that hides ndc_exclude=TRUE rows
+// (FDA bulk ingredients / compounding components). It is appended to an
+// existing WHERE clause, so it always begins with " AND ". When
+// includeExcluded is true it returns the empty string, opting back in to
+// excluded NDCs. Excluding is the product default (issue #10).
+func excludeFilter(includeExcluded bool) string {
+	if includeExcluded {
+		return ""
+	}
+	return " AND ndc_exclude = FALSE"
 }
 
 // LookupByProductNDC finds a product by its 2-segment product NDC.
-// Tries each variant for unhyphenated input.
-func (q *QueryStore) LookupByProductNDC(ctx context.Context, variants []string) (*ProductResult, error) {
+// Tries each variant for unhyphenated input. Excluded NDCs are hidden
+// unless includeExcluded is true.
+func (q *QueryStore) LookupByProductNDC(ctx context.Context, variants []string, includeExcluded bool) (*ProductResult, error) {
 	for _, ndc := range variants {
 		var p ProductResult
 		err := q.db.QueryRow(ctx, `
@@ -74,7 +91,7 @@ func (q *QueryStore) LookupByProductNDC(ctx context.Context, variants []string) 
 			       strength, strength_unit, pharm_classes, dea_schedule,
 			       marketing_category, application_number
 			FROM products
-			WHERE product_ndc = $1
+			WHERE product_ndc = $1`+excludeFilter(includeExcluded)+`
 			LIMIT 1
 		`, ndc).Scan(
 			&p.ProductNDC, &p.BrandName, &p.GenericName,
@@ -87,7 +104,7 @@ func (q *QueryStore) LookupByProductNDC(ctx context.Context, variants []string) 
 		}
 
 		// Load packages.
-		packages, err := q.getPackages(ctx, p.ProductNDC)
+		packages, err := q.getPackages(ctx, p.ProductNDC, includeExcluded)
 		if err == nil {
 			p.Packages = packages
 		}
@@ -98,17 +115,19 @@ func (q *QueryStore) LookupByProductNDC(ctx context.Context, variants []string) 
 }
 
 // LookupByPackageNDC finds a product by its 3-segment package NDC.
-func (q *QueryStore) LookupByPackageNDC(ctx context.Context, variants []string) (*ProductResult, string, error) {
+// Excluded packages and products are hidden unless includeExcluded is true.
+func (q *QueryStore) LookupByPackageNDC(ctx context.Context, variants []string, includeExcluded bool) (*ProductResult, string, error) {
 	for _, ndc := range variants {
 		var productNDC string
 		err := q.db.QueryRow(ctx, `
-			SELECT product_ndc FROM packages WHERE ndc_package_code = $1 LIMIT 1
+			SELECT product_ndc FROM packages WHERE ndc_package_code = $1`+excludeFilter(includeExcluded)+`
+			LIMIT 1
 		`, ndc).Scan(&productNDC)
 		if err != nil {
 			continue
 		}
 
-		product, err := q.LookupByProductNDC(ctx, []string{productNDC})
+		product, err := q.LookupByProductNDC(ctx, []string{productNDC}, includeExcluded)
 		if err != nil {
 			return nil, "", err
 		}
@@ -118,11 +137,27 @@ func (q *QueryStore) LookupByPackageNDC(ctx context.Context, variants []string) 
 	return nil, "", fmt.Errorf("package not found")
 }
 
-// SearchProducts performs full-text search across product names.
-func (q *QueryStore) SearchProducts(ctx context.Context, query string, limit, offset int) ([]SearchResult, int, error) {
-	if limit <= 0 || limit > 100 {
-		limit = 50
+// Search result paging bounds. A request outside [1, MaxSearchLimit] falls back
+// to DefaultSearchLimit.
+const (
+	MaxSearchLimit     = 100
+	DefaultSearchLimit = 50
+)
+
+// ClampSearchLimit normalizes a requested page size to the value the search
+// store will actually apply. Callers (e.g. the HTTP handler) use this so the
+// limit they report to clients matches the size of the result set returned.
+func ClampSearchLimit(limit int) int {
+	if limit <= 0 || limit > MaxSearchLimit {
+		return DefaultSearchLimit
 	}
+	return limit
+}
+
+// SearchProducts performs full-text search across product names.
+// Excluded NDCs are hidden unless includeExcluded is true.
+func (q *QueryStore) SearchProducts(ctx context.Context, query string, limit, offset int, includeExcluded bool) ([]SearchResult, int, error) {
+	limit = ClampSearchLimit(limit)
 	if offset < 0 {
 		offset = 0
 	}
@@ -133,7 +168,7 @@ func (q *QueryStore) SearchProducts(ctx context.Context, query string, limit, of
 	var total int
 	err := q.db.QueryRow(ctx, `
 		SELECT COUNT(*) FROM products
-		WHERE search_vector @@ to_tsquery('english', $1)
+		WHERE search_vector @@ to_tsquery('english', $1)`+excludeFilter(includeExcluded)+`
 	`, tsQuery).Scan(&total)
 	if err != nil {
 		return nil, 0, fmt.Errorf("counting search results: %w", err)
@@ -144,7 +179,7 @@ func (q *QueryStore) SearchProducts(ctx context.Context, query string, limit, of
 		       dosage_form, labeler_name,
 		       ts_rank(search_vector, to_tsquery('english', $1)) AS relevance
 		FROM products
-		WHERE search_vector @@ to_tsquery('english', $1)
+		WHERE search_vector @@ to_tsquery('english', $1)`+excludeFilter(includeExcluded)+`
 		ORDER BY relevance DESC
 		LIMIT $2 OFFSET $3
 	`, tsQuery, limit, offset)
@@ -169,15 +204,16 @@ func (q *QueryStore) SearchProducts(ctx context.Context, query string, limit, of
 }
 
 // GetPackagesByProductNDC returns all packages for a product NDC.
-func (q *QueryStore) GetPackagesByProductNDC(ctx context.Context, productNDC string) ([]PackageResult, error) {
-	return q.getPackages(ctx, productNDC)
+// Excluded packages are hidden unless includeExcluded is true.
+func (q *QueryStore) GetPackagesByProductNDC(ctx context.Context, productNDC string, includeExcluded bool) ([]PackageResult, error) {
+	return q.getPackages(ctx, productNDC, includeExcluded)
 }
 
-func (q *QueryStore) getPackages(ctx context.Context, productNDC string) ([]PackageResult, error) {
+func (q *QueryStore) getPackages(ctx context.Context, productNDC string, includeExcluded bool) ([]PackageResult, error) {
 	rows, err := q.db.Query(ctx, `
 		SELECT ndc_package_code, description, sample_package
 		FROM packages
-		WHERE product_ndc = $1
+		WHERE product_ndc = $1`+excludeFilter(includeExcluded)+`
 		ORDER BY ndc_package_code
 	`, productNDC)
 	if err != nil {
@@ -199,13 +235,15 @@ func (q *QueryStore) getPackages(ctx context.Context, productNDC string) ([]Pack
 
 // OpenFDASearch performs a search using a pre-built WHERE clause and returns full product
 // details with packages, suitable for transforming into the openFDA response format.
-func (q *QueryStore) OpenFDASearch(ctx context.Context, whereClause string, args []interface{}, limit, skip int) ([]ProductResult, int, error) {
+func (q *QueryStore) OpenFDASearch(ctx context.Context, whereClause string, args []interface{}, limit, skip int, includeExcluded bool) ([]ProductResult, int, error) {
 	if limit <= 0 || limit > 1000 {
 		limit = 1
 	}
 	if skip < 0 {
 		skip = 0
 	}
+
+	whereClause += excludeFilter(includeExcluded)
 
 	// Count total matches.
 	countSQL := fmt.Sprintf("SELECT COUNT(*) FROM products WHERE %s", whereClause)
@@ -219,7 +257,7 @@ func (q *QueryStore) OpenFDASearch(ctx context.Context, whereClause string, args
 		SELECT product_id, product_ndc, proprietary_name, nonproprietary_name,
 		       dosage_form, route, labeler_name, substance_name,
 		       strength, strength_unit, pharm_classes, dea_schedule,
-		       marketing_category, application_number
+		       marketing_category, product_type, application_number
 		FROM products
 		WHERE %s
 		ORDER BY product_ndc
@@ -241,7 +279,7 @@ func (q *QueryStore) OpenFDASearch(ctx context.Context, whereClause string, args
 			&productID, &p.ProductNDC, &p.BrandName, &p.GenericName,
 			&p.DosageForm, &p.Route, &p.Manufacturer, &p.ActiveIngredient,
 			&p.Strength, &p.StrengthUnit, &p.PharmClasses, &p.DEASchedule,
-			&p.MarketingCategory, &p.ApplicationNumber,
+			&p.MarketingCategory, &p.ProductType, &p.ApplicationNumber,
 		); err != nil {
 			return nil, 0, fmt.Errorf("scanning openfda result: %w", err)
 		}
@@ -255,7 +293,7 @@ func (q *QueryStore) OpenFDASearch(ctx context.Context, whereClause string, args
 
 	// Batch-load packages for all products in a single query (avoids N+1).
 	if len(productNDCs) > 0 {
-		packageMap, err := q.getPackagesBatch(ctx, productNDCs)
+		packageMap, err := q.getPackagesBatch(ctx, productNDCs, includeExcluded)
 		if err == nil {
 			for i := range products {
 				products[i].Packages = packageMap[products[i].ProductNDC]
@@ -267,11 +305,11 @@ func (q *QueryStore) OpenFDASearch(ctx context.Context, whereClause string, args
 }
 
 // getPackagesBatch loads packages for multiple product NDCs in a single query.
-func (q *QueryStore) getPackagesBatch(ctx context.Context, productNDCs []string) (map[string][]PackageResult, error) {
+func (q *QueryStore) getPackagesBatch(ctx context.Context, productNDCs []string, includeExcluded bool) (map[string][]PackageResult, error) {
 	rows, err := q.db.Query(ctx, `
 		SELECT product_ndc, ndc_package_code, description, sample_package
 		FROM packages
-		WHERE product_ndc = ANY($1)
+		WHERE product_ndc = ANY($1)`+excludeFilter(includeExcluded)+`
 		ORDER BY product_ndc, ndc_package_code
 	`, productNDCs)
 	if err != nil {
@@ -308,6 +346,20 @@ func (q *QueryStore) GetStats(ctx context.Context) (*StatsResult, error) {
 		ORDER BY completed_at DESC LIMIT 1
 	`).Scan(&lastLoaded)
 	s.LastLoaded = lastLoaded
+
+	// Wall-clock duration of the most recent completed load run, in seconds.
+	_ = q.db.QueryRow(ctx, `
+		SELECT EXTRACT(EPOCH FROM (MAX(completed_at) - MIN(started_at)))
+		FROM load_checkpoints
+		WHERE load_id = (
+			SELECT load_id FROM load_checkpoints
+			WHERE status = 'loaded' AND completed_at IS NOT NULL
+			ORDER BY completed_at DESC LIMIT 1
+		)
+		AND started_at IS NOT NULL AND completed_at IS NOT NULL
+	`).Scan(&s.LoadDuration)
+
+	s.Source = q.source
 
 	return &s, nil
 }
