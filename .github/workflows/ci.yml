@@ -170,27 +170,21 @@ jobs:
             dockerhub.calebdunn.tech/finish06/rx-dag:beta
             ${{ github.server_url == 'https://github.com' && 'ghcr.io/finish06/rx-dag:beta' || '' }}
 
-      - name: Trigger staging deploy
-        id: deploy
-        if: steps.version.outputs.is_release == 'false' && success()
-        run: |
-          BODY='{"app":"rx-dag","ref":"${{ github.ref }}","sha":"${{ github.sha }}","tag":"${{ steps.version.outputs.tag }}"}'
-          SIGNATURE="sha256=$(echo -n "$BODY" | openssl dgst -sha256 -hmac "${{ secrets.WEBHOOK_SECRET }}" | awk '{print $NF}')"
-          echo "Triggering staging deploy..."
-          HTTP_CODE=$(curl -s -o /tmp/deploy-response.json -w "%{http_code}" \
-            -X POST "${{ secrets.STAGING_WEBHOOK_URL }}/deploy" \
-            -H "Content-Type: application/json" \
-            -H "X-Hub-Signature-256: $SIGNATURE" \
-            -d "$BODY")
-          echo "Deploy response (HTTP $HTTP_CODE):"
-          cat /tmp/deploy-response.json
-          if [ "$HTTP_CODE" -ne 200 ]; then
-            echo "::warning::Staging deploy returned HTTP $HTTP_CODE"
-            echo "deploy_ok=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "deploy_ok=true" >> "$GITHUB_OUTPUT"
-          fi
+      - name: Notify Murph to deploy staging
+        # Staging belongs to Gitea CI (it builds the :beta image). Skipped on
+        # GitHub, where a v* tag drives the GitHub-built prod image instead.
+        # Chain: CI -> friend.murph.task -> Murph rolls drugs-staging via
+        # SSH+kubectl + fires friend.gracie.task for QA.
+        if: steps.version.outputs.is_release == 'false' && success() && github.server_url != 'https://github.com'
         continue-on-error: true
+        run: |
+          TASK="rxdag-staging-${GITHUB_SHA:0:8}"
+          INSTR="rx-dag :beta rebuilt by Gitea CI (commit ${GITHUB_SHA}). STAGING DEPLOY: (1) SSH kube1 then 'sudo k3s kubectl -n drugs-staging rollout restart deploy/rx-dag' and wait for rollout status. (2) Verify http://rx-dag-staging.10.17.2.213.nip.io/health returns 200 and /version is fresh. (3) Dispatch Gracie for QA via NATS js.publish to friend.gracie.task.rxdag-qa-<short-id> a JSON with task_id + instructions to QA http://rx-dag-staging.10.17.2.213.nip.io (check /health, /version, a search, /api/ndc/stats, openFDA) and return APPROVE or CHANGES-NEEDED, using your friend NATS user. Report on friend.murph.result. Low-risk staging op, execute it."
+          curl -fsS -X POST "${{ secrets.NATS_PUBLISH_URL }}/publish/friend.murph.task.$TASK" \
+            -H "X-API-Key: ${{ secrets.NATS_MURPH_TASK_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d "{\"task_id\":\"$TASK\",\"instructions\":\"$INSTR\"}"
+          echo "Pinged Murph to deploy + QA staging ($TASK)"
 
       - name: Build and push release
         if: steps.version.outputs.is_release == 'true'
